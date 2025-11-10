@@ -125,7 +125,11 @@ fun WelcomeScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Button(
-                    onClick = { /* TODO: Ver catálogo */ },
+
+
+
+                    onClick = { navController.navigate("home") },
+
                     colors = ButtonDefaults.buttonColors(backgroundColor = Yellow),
                     modifier = Modifier
                         .fillMaxWidth(0.7f)
@@ -145,3 +149,4 @@ fun WelcomeScreenPreview() {
         WelcomeScreen(rememberNavController())
     }
 }
+
