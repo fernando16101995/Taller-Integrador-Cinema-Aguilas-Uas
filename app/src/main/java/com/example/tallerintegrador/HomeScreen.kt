@@ -1,7 +1,6 @@
 package com.example.tallerintegrador
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -9,18 +8,19 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.tallerintegrador.data.model.pelicula
 import com.example.tallerintegrador.feature.peliculas.PeliculaViewModel
@@ -29,9 +29,9 @@ import com.example.tallerintegrador.ui.theme.TallerIntegradorTheme
 import com.example.tallerintegrador.ui.theme.Yellow
 
 @Composable
-fun HomeScreen(viewModel: PeliculaViewModel, navController: androidx.navigation.NavController? = null) {
+fun HomeScreen(viewModel: PeliculaViewModel, navController: NavController? = null) {
     val peliculas by viewModel.peliculas.collectAsState()
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(Unit) {
         viewModel.getPeliculas()
@@ -60,7 +60,7 @@ fun HomeScreenContent(
     selectedTab: Int,
     onTabSelected: (Int) -> Unit,
     viewModel: PeliculaViewModel? = null,
-    navController: androidx.navigation.NavController? = null
+    navController: NavController? = null
 ) {
     Scaffold(
         topBar = {
@@ -159,7 +159,7 @@ fun BottomNavigationBar(
             unselectedContentColor = Color.White.copy(alpha = 0.6f)
         )
         BottomNavigationItem(
-            icon = { Icon(Icons.Filled.List, contentDescription = "Categorías") },
+            icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Categorías") },
             label = { Text("Categorías", fontSize = 11.sp) },
             selected = selectedTab == 1,
             onClick = { onTabSelected(1) },
