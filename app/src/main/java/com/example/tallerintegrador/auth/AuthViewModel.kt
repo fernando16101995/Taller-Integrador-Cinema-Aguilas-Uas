@@ -5,8 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tallerintegrador.auth.state.AuthState
-import com.example.tallerintegrador.data.model.LoginRequest
-import com.example.tallerintegrador.data.model.RegisterRequest
+import com.example.tallerintegrador.data.model.*
 import com.example.tallerintegrador.data.network.RetrofitClient
 import kotlinx.coroutines.launch
 

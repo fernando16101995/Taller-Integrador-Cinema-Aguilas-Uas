@@ -7,7 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
@@ -79,12 +80,21 @@ fun BusquedaScreen(viewModel: PeliculaViewModel) {
                     }
                 }
             },
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                textColor = Color.White,
+            // --- CÓDIGO NUEVO Y CORRECTO ---
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedTextColor = Color.White,
+                focusedTextColor = Color.White,
                 cursorColor = Yellow,
                 focusedBorderColor = Yellow,
-                unfocusedBorderColor = Yellow.copy(alpha = 0.5f)
+                unfocusedBorderColor = Yellow.copy(alpha = 0.5f),
+                unfocusedPlaceholderColor = Color.White.copy(alpha = 0.6f),
+                focusedPlaceholderColor = Color.White.copy(alpha = 0.6f),
+                unfocusedLeadingIconColor = Yellow,
+                focusedLeadingIconColor = Yellow,
+                unfocusedTrailingIconColor = Yellow,
+                focusedTrailingIconColor = Yellow,
             ),
+
             shape = RoundedCornerShape(12.dp)
         )
 
@@ -148,8 +158,12 @@ fun SearchResultItem(pelicula: pelicula) {
             .fillMaxWidth()
             .clickable { /* TODO: Ver detalles de la película */ },
         shape = RoundedCornerShape(12.dp),
-        backgroundColor = Color.White.copy(alpha = 0.1f),
-        elevation = 4.dp
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.1f)
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 4.dp
+        )
     ) {
         Row(
             modifier = Modifier.padding(12.dp),

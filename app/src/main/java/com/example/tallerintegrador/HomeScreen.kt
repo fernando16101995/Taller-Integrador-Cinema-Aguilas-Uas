@@ -1,12 +1,14 @@
 package com.example.tallerintegrador
 
+import android.net.Uri
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
@@ -17,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,7 +56,7 @@ fun HomeScreen(viewModel: PeliculaViewModel, navController: NavController? = nul
         navController = navController
     )
 }
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenContent(
     peliculasPorGenero: Map<String, List<pelicula>>,
@@ -66,12 +69,20 @@ fun HomeScreenContent(
         topBar = {
             TopAppBar(
                 title = { Text("CinemasAguilasUas", color = Yellow) },
-                backgroundColor = DarkBlue,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = DarkBlue, // Color de fondo
+                    titleContentColor = Yellow, // Color del título
+                    actionIconContentColor = Color.White // Color de los iconos de acción
+                ),
                 actions = {
                     TextButton(onClick = { /* TODO: Mi perfil */ }) {
                         Text("Mi perfil", color = Yellow)
                     }
-                    TextButton(onClick = { /* TODO: Cerrar sesión */ }) {
+                    TextButton(onClick = {
+                        navController?.navigate("welcome") {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }) {
                         Text("Cerrar sesión", color = Color.White)
                     }
                 }
@@ -83,7 +94,7 @@ fun HomeScreenContent(
                 onTabSelected = onTabSelected
             )
         },
-        backgroundColor = DarkBlue
+        containerColor = DarkBlue // <--- Parámetro correcto para el fondo
     ) { padding ->
         when (selectedTab) {
             0 -> {
@@ -105,7 +116,13 @@ fun HomeScreenContent(
                                 horizontalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 items(peliculasDelGenero) { pelicula ->
-                                    MovieCard(pelicula = pelicula)
+                                    MovieCard(
+                                        pelicula = pelicula,
+                                        onClick = {
+                                            val encodedTitulo = Uri.encode(pelicula.titulo)
+                                            navController?.navigate("detalle_pelicula/$encodedTitulo")
+                                        }
+                                    )
                                 }
                             }
                         }
@@ -145,58 +162,91 @@ fun BottomNavigationBar(
     selectedTab: Int,
     onTabSelected: (Int) -> Unit
 ) {
-    BottomNavigation(
-        backgroundColor = DarkBlue,
-        contentColor = Yellow,
-        elevation = 8.dp
+    NavigationBar(
+        containerColor = DarkBlue, // Color de fondo de la barra
+        contentColor = Yellow, // Color por defecto para el contenido
+        tonalElevation = 8.dp // Equivalente a 'elevation'
     ) {
-        BottomNavigationItem(
+        // Ítem de Inicio
+        NavigationBarItem(
             icon = { Icon(Icons.Filled.Home, contentDescription = "Inicio") },
             label = { Text("Inicio", fontSize = 11.sp) },
             selected = selectedTab == 0,
             onClick = { onTabSelected(0) },
-            selectedContentColor = Yellow,
-            unselectedContentColor = Color.White.copy(alpha = 0.6f)
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Yellow,
+                unselectedIconColor = Color.White.copy(alpha = 0.6f),
+                selectedTextColor = Yellow,
+                unselectedTextColor = Color.White.copy(alpha = 0.6f),
+                indicatorColor = DarkBlue.copy(alpha=0.2f) // Color del "círculo" indicador
+            )
         )
-        BottomNavigationItem(
+        // Ítem de Categorías
+        NavigationBarItem(
             icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Categorías") },
             label = { Text("Categorías", fontSize = 11.sp) },
             selected = selectedTab == 1,
             onClick = { onTabSelected(1) },
-            selectedContentColor = Yellow,
-            unselectedContentColor = Color.White.copy(alpha = 0.6f)
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Yellow,
+                unselectedIconColor = Color.White.copy(alpha = 0.6f),
+                selectedTextColor = Yellow,
+                unselectedTextColor = Color.White.copy(alpha = 0.6f),
+                indicatorColor = DarkBlue.copy(alpha=0.2f)
+            )
         )
-        BottomNavigationItem(
+        // Ítem de Búsqueda
+        NavigationBarItem(
             icon = { Icon(Icons.Filled.Search, contentDescription = "Búsqueda") },
             label = { Text("Búsqueda", fontSize = 11.sp) },
             selected = selectedTab == 2,
             onClick = { onTabSelected(2) },
-            selectedContentColor = Yellow,
-            unselectedContentColor = Color.White.copy(alpha = 0.6f)
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Yellow,
+                unselectedIconColor = Color.White.copy(alpha = 0.6f),
+                selectedTextColor = Yellow,
+                unselectedTextColor = Color.White.copy(alpha = 0.6f),
+                indicatorColor = DarkBlue.copy(alpha=0.2f)
+            )
         )
-        BottomNavigationItem(
+        // Ítem de Favoritos
+        NavigationBarItem(
             icon = { Icon(Icons.Filled.Favorite, contentDescription = "Favoritos") },
             label = { Text("Favoritos", fontSize = 11.sp) },
             selected = selectedTab == 3,
             onClick = { onTabSelected(3) },
-            selectedContentColor = Yellow,
-            unselectedContentColor = Color.White.copy(alpha = 0.6f)
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Yellow,
+                unselectedIconColor = Color.White.copy(alpha = 0.6f),
+                selectedTextColor = Yellow,
+                unselectedTextColor = Color.White.copy(alpha = 0.6f),
+                indicatorColor = DarkBlue.copy(alpha=0.2f)
+            )
         )
-        BottomNavigationItem(
+        // Ítem de Perfil
+        NavigationBarItem(
             icon = { Icon(Icons.Filled.Person, contentDescription = "Perfil") },
             label = { Text("Perfil", fontSize = 11.sp) },
             selected = selectedTab == 4,
             onClick = { onTabSelected(4) },
-            selectedContentColor = Yellow,
-            unselectedContentColor = Color.White.copy(alpha = 0.6f)
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Yellow,
+                unselectedIconColor = Color.White.copy(alpha = 0.6f),
+                selectedTextColor = Yellow,
+                unselectedTextColor = Color.White.copy(alpha = 0.6f),
+                indicatorColor = DarkBlue.copy(alpha=0.2f)
+            )
         )
     }
 }
 
+
 @Composable
-fun MovieCard(pelicula: pelicula) {
+fun MovieCard(pelicula: pelicula, onClick: () -> Unit = {}) {
     Column(
-        modifier = Modifier.width(150.dp),
+        modifier = Modifier
+            .width(150.dp)
+            .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
@@ -208,12 +258,14 @@ fun MovieCard(pelicula: pelicula) {
                 .clip(RoundedCornerShape(8.dp)),
             contentScale = ContentScale.Crop
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = pelicula.titulo,
             color = Color.White,
             fontSize = 14.sp,
-            maxLines = 1
+            fontWeight = FontWeight.Medium,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }

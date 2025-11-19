@@ -3,6 +3,7 @@ package com.example.tallerintegrador.data.model
 import com.google.gson.annotations.SerializedName
 
 data class pelicula(
+
     @SerializedName("title")
     val titulo: String,
     @SerializedName("description")
