@@ -36,9 +36,9 @@ fun BusquedaScreen(viewModel: PeliculaViewModel) {
         emptyList()
     } else {
         peliculas.filter {
-            it.titulo.contains(searchQuery, ignoreCase = true) ||
-                    it.genero.contains(searchQuery, ignoreCase = true) ||
-                    it.sinopsis.contains(searchQuery, ignoreCase = true)
+            it.title.contains(searchQuery, ignoreCase = true) ||
+                    it.genre.contains(searchQuery, ignoreCase = true) ||
+                    it.description.contains(searchQuery, ignoreCase = true)
         }
     }
 
@@ -171,7 +171,7 @@ fun SearchResultItem(pelicula: pelicula) {
         ) {
             Image(
                 painter = rememberAsyncImagePainter(pelicula.posterUrl),
-                contentDescription = pelicula.titulo,
+                contentDescription = pelicula.title,
                 modifier = Modifier
                     .width(80.dp)
                     .height(120.dp)
@@ -185,26 +185,26 @@ fun SearchResultItem(pelicula: pelicula) {
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = pelicula.titulo,
+                    text = pelicula.title,
                     color = Yellow,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = pelicula.genero,
+                    text = pelicula.genre,
                     color = Color.White.copy(alpha = 0.7f),
                     fontSize = 14.sp
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "${pelicula.duracion} min",
+                    text = "${pelicula.durationMinutes} min",
                     color = Color.White.copy(alpha = 0.6f),
                     fontSize = 12.sp
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = pelicula.sinopsis,
+                    text = pelicula.description,
                     color = Color.White.copy(alpha = 0.8f),
                     fontSize = 13.sp,
                     maxLines = 2

@@ -52,7 +52,7 @@ fun DetallePeliculaScreen(
         }
     }
 
-    val pelicula = peliculas.find { it.titulo == peliculaTitulo }
+    val pelicula = peliculas.find { it.title == peliculaTitulo }
 
     if (pelicula == null) {
         Box(
@@ -119,7 +119,7 @@ fun DetallePeliculaScreen(
             ) {
                 AsyncImage(
                     model = pelicula.posterUrl,
-                    contentDescription = pelicula.titulo,
+                    contentDescription = pelicula.title,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
@@ -148,7 +148,7 @@ fun DetallePeliculaScreen(
                     .padding(horizontal = 16.dp)
             ) {
                 Text(
-                    text = pelicula.titulo,
+                    text = pelicula.title,
                     color = Yellow,
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold
@@ -160,8 +160,8 @@ fun DetallePeliculaScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    InfoChip(text = pelicula.genero)
-                    InfoChip(text = "${pelicula.duracion} min")
+                    InfoChip(text = pelicula.genre)
+                    InfoChip(text = "${pelicula.durationMinutes} min")
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -176,7 +176,7 @@ fun DetallePeliculaScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = pelicula.sinopsis,
+                    text = pelicula.description,
                     color = Color.White,
                     fontSize = 16.sp,
                     lineHeight = 24.sp
