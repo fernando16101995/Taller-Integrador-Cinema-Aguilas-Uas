@@ -3,7 +3,7 @@ package com.example.tallerintegrador
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,7 +19,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.tallerintegrador.auth.AuthViewModel
 import com.example.tallerintegrador.auth.state.AuthState
-import com.example.tallerintegrador.data.model.RegisterRequest
+import com.example.tallerintegrador.data.model.*
 import com.example.tallerintegrador.ui.theme.DarkBlue
 import com.example.tallerintegrador.ui.theme.TallerIntegradorTheme
 import com.example.tallerintegrador.ui.theme.Yellow
@@ -32,7 +32,8 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel = 
     var password by remember { mutableStateOf("") }
     val authState by authViewModel.authState
 
-    val scaffoldState = rememberScaffoldState()
+    // --- LÍNEA NUEVA Y CORRECTA ---
+    val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(authState) {
@@ -44,18 +45,22 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel = 
             }
             is AuthState.Error -> {
                 scope.launch {
-                    scaffoldState.snackbarHostState.showSnackbar(state.message)
+                    // --- LÍNEA NUEVA Y CORRECTA ---
+                    snackbarHostState.showSnackbar(state.message)
                 }
             }
             else -> {}
         }
     }
 
-    Scaffold(scaffoldState = scaffoldState) {
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { paddingValues -> // <--- Le das un nombre explícito al parámetro
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(it)
+                .padding(paddingValues) // <--- Usas el nuevo nombre
         ) {
             Image(
                 painter = painterResource(id = R.drawable.login_background),
@@ -83,11 +88,14 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel = 
                     label = { Text("Nombre", color = Yellow) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        textColor = Yellow,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedTextColor = Yellow,
+                        focusedTextColor = Yellow,
                         cursorColor = Yellow,
                         focusedBorderColor = Yellow,
-                        unfocusedBorderColor = Yellow.copy(alpha = 0.5f)
+                        unfocusedBorderColor = Yellow.copy(alpha = 0.5f),
+                        unfocusedLabelColor = Yellow,
+                        focusedLabelColor = Yellow
                     )
                 )
 
@@ -99,11 +107,14 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel = 
                     label = { Text("Email", color = Yellow) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        textColor = Yellow,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedTextColor = Yellow,
+                        focusedTextColor = Yellow,
                         cursorColor = Yellow,
                         focusedBorderColor = Yellow,
-                        unfocusedBorderColor = Yellow.copy(alpha = 0.5f)
+                        unfocusedBorderColor = Yellow.copy(alpha = 0.5f),
+                        unfocusedLabelColor = Yellow,
+                        focusedLabelColor = Yellow
                     )
                 )
 
@@ -116,11 +127,14 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel = 
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        textColor = Yellow,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedTextColor = Yellow,
+                        focusedTextColor = Yellow,
                         cursorColor = Yellow,
                         focusedBorderColor = Yellow,
-                        unfocusedBorderColor = Yellow.copy(alpha = 0.5f)
+                        unfocusedBorderColor = Yellow.copy(alpha = 0.5f),
+                        unfocusedLabelColor = Yellow,
+                        focusedLabelColor = Yellow
                     )
                 )
 
@@ -128,7 +142,7 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel = 
 
                 Button(
                     onClick = { authViewModel.register(RegisterRequest(name, email, password)) },
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Yellow),
+                    colors = ButtonDefaults.buttonColors(containerColor = Yellow),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),

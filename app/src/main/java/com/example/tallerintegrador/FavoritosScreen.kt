@@ -1,13 +1,22 @@
 package com.example.tallerintegrador
 
-import androidx.compose.foundation.Image
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+
+
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults // Necesario para .cardColors y .cardElevation
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import coil.compose.AsyncImage // El import para la nueva forma de cargar imágenes
+
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
@@ -20,7 +29,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.rememberAsyncImagePainter
+
 import com.example.tallerintegrador.data.model.pelicula
 import com.example.tallerintegrador.feature.peliculas.PeliculaViewModel
 import com.example.tallerintegrador.ui.theme.DarkBlue
@@ -118,21 +127,29 @@ fun FavoritosScreen(viewModel: PeliculaViewModel) {
 
 @Composable
 fun FavoritoItem(pelicula: pelicula, onRemove: () -> Unit) {
+    // --- CÓDIGO NUEVO Y CORRECTO ---
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { /* TODO: Ver detalles de la película */ },
         shape = RoundedCornerShape(12.dp),
-        backgroundColor = Color.White.copy(alpha = 0.1f),
-        elevation = 4.dp
+        // Inicio de la corrección de errores
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.1f)
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 4.dp
+        )
+        // Fin de la corrección de errores
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = rememberAsyncImagePainter(pelicula.posterUrl),
-                contentDescription = pelicula.titulo,
+            // Corrección de la carga de imagen (práctica recomendada)
+            AsyncImage(
+                model = pelicula.posterUrl,
+                contentDescription = pelicula.title,
                 modifier = Modifier
                     .width(80.dp)
                     .height(120.dp)
@@ -140,32 +157,33 @@ fun FavoritoItem(pelicula: pelicula, onRemove: () -> Unit) {
                 contentScale = ContentScale.Crop
             )
 
+            // El resto del contenido de la fila no necesita cambios
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = pelicula.titulo,
+                    text = pelicula.title,
                     color = Yellow,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = pelicula.genero,
+                    text = pelicula.genre,
                     color = Color.White.copy(alpha = 0.7f),
                     fontSize = 14.sp
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "${pelicula.duracion} min",
+                    text = "${pelicula.durationMinutes} min",
                     color = Color.White.copy(alpha = 0.6f),
                     fontSize = 12.sp
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = pelicula.sinopsis,
+                    text = pelicula.description,
                     color = Color.White.copy(alpha = 0.8f),
                     fontSize = 13.sp,
                     maxLines = 2
