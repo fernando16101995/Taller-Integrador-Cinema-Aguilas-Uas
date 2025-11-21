@@ -35,6 +35,7 @@ import com.example.tallerintegrador.feature.peliculas.PeliculaViewModel
 import com.example.tallerintegrador.ui.theme.DarkBlue
 import com.example.tallerintegrador.ui.theme.Yellow
 
+
 @Composable
 fun FavoritosScreen(viewModel: PeliculaViewModel) {
     // TODO: En una implementación real, deberías tener una lista de favoritos guardada
