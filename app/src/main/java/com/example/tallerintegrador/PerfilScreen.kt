@@ -5,7 +5,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material3.*
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.VerticalDivider
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
@@ -77,14 +81,14 @@ fun PerfilScreen(navController: NavController?) {
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 StatItem(label = "Vistas", value = "42")
-                Divider(
+                VerticalDivider(
                     modifier = Modifier
                         .width(1.dp)
                         .height(40.dp),
                     color = Color.White.copy(alpha = 0.3f)
                 )
                 StatItem(label = "Favoritas", value = "3")
-                Divider(
+                VerticalDivider(
                     modifier = Modifier
                         .width(1.dp)
                         .height(40.dp),
@@ -147,7 +151,7 @@ fun PerfilScreen(navController: NavController?) {
 
             item {
                 ProfileOption(
-                    icon = Icons.Filled.ExitToApp,
+                    icon = Icons.AutoMirrored.Filled.ExitToApp, // <--- Esta es la versión correcta
                     title = "Cerrar Sesión",
                     subtitle = "Salir de tu cuenta",
                     onClick = { showLogoutDialog = true },
@@ -163,6 +167,7 @@ fun PerfilScreen(navController: NavController?) {
 
     // Diálogo de confirmación de cierre de sesión
     if (showLogoutDialog) {
+        // --- CÓDIGO NUEVO Y CORRECTO ---
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
             title = {
@@ -195,9 +200,10 @@ fun PerfilScreen(navController: NavController?) {
                     Text("Cancelar", color = Yellow)
                 }
             },
-            backgroundColor = DarkBlue,
+            containerColor = DarkBlue, // <--- El parámetro correcto es 'containerColor'
             shape = RoundedCornerShape(16.dp)
         )
+
     }
 }
 
@@ -233,8 +239,12 @@ fun ProfileOption(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp),
         shape = RoundedCornerShape(12.dp),
-        backgroundColor = Color.White.copy(alpha = 0.05f),
-        elevation = 2.dp
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.05f) // 'backgroundColor' ahora es 'containerColor'
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp // 'elevation' se configura así
+        )
     ) {
         Row(
             modifier = Modifier
@@ -277,7 +287,7 @@ fun ProfileOption(
             }
 
             Icon(
-                imageVector = Icons.Filled.KeyboardArrowRight,
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = "Ir",
                 tint = Color.White.copy(alpha = 0.5f)
             )

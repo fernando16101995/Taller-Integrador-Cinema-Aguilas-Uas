@@ -3,7 +3,7 @@ package com.example.tallerintegrador
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,7 +20,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.tallerintegrador.ui.theme.DarkBlue
 import com.example.tallerintegrador.ui.theme.TallerIntegradorTheme
 import com.example.tallerintegrador.ui.theme.Yellow
-import com.example.tallerintegrador.R
+
 
 @Composable
 fun WelcomeScreen(navController: NavController) {
@@ -52,14 +52,14 @@ fun WelcomeScreen(navController: NavController) {
             ) {
                 Button(
                     onClick = { navController.navigate("login") },
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Yellow)
+                    colors = ButtonDefaults.buttonColors(containerColor = Yellow)
                 ) {
                     Text("Iniciar sesión", color = DarkBlue)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(
                     onClick = { navController.navigate("register") }, // Acción añadida
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Yellow)
+                    colors = ButtonDefaults.buttonColors(containerColor = Yellow)
                 ) {
                     Text("Registrarse", color = DarkBlue)
                 }
@@ -114,7 +114,7 @@ fun WelcomeScreen(navController: NavController) {
                 // Botones de acción
                 Button(
                     onClick = { navController.navigate("login") },
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Yellow),
+                    colors = ButtonDefaults.buttonColors(containerColor = Yellow),
                     modifier = Modifier
                         .fillMaxWidth(0.7f)
                         .height(50.dp)
@@ -130,7 +130,7 @@ fun WelcomeScreen(navController: NavController) {
 
                     onClick = { navController.navigate("home") },
 
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Yellow),
+                    colors = ButtonDefaults.buttonColors(containerColor = Yellow),
                     modifier = Modifier
                         .fillMaxWidth(0.7f)
                         .height(50.dp)

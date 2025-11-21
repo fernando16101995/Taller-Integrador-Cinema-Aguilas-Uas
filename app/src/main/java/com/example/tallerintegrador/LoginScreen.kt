@@ -3,7 +3,7 @@ package com.example.tallerintegrador
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,7 +19,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.tallerintegrador.auth.AuthViewModel
 import com.example.tallerintegrador.auth.state.AuthState
-import com.example.tallerintegrador.data.model.LoginRequest
+import com.example.tallerintegrador.data.model.*
 import com.example.tallerintegrador.ui.theme.DarkBlue
 import com.example.tallerintegrador.ui.theme.TallerIntegradorTheme
 import com.example.tallerintegrador.ui.theme.Yellow
@@ -31,7 +31,9 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel = vie
     var password by remember { mutableStateOf("") }
     val authState by authViewModel.authState
 
-    val scaffoldState = rememberScaffoldState()
+    // --- LÍNEA CORRECTA ---
+    val snackbarHostState = remember { SnackbarHostState() }
+
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(authState) {
@@ -44,18 +46,21 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel = vie
             }
             is AuthState.Error -> {
                 scope.launch {
-                    scaffoldState.snackbarHostState.showSnackbar(state.message)
+                    snackbarHostState.showSnackbar(state.message)
                 }
             }
             else -> {}
         }
     }
 
-    Scaffold(scaffoldState = scaffoldState) {
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    )
+    { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(it) // Padding del scaffold
+                .padding(paddingValues) // Padding del scaffold
         ) {
             Image(
                 painter = painterResource(id = R.drawable.login_background),
@@ -84,11 +89,14 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel = vie
                     label = { Text("Email", color = Yellow) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        textColor = Yellow,
+                    colors = OutlinedTextFieldDefaults.colors( // Renombrado a OutlinedTextFieldDefaults.colors
+                        unfocusedTextColor = Yellow,
+                        focusedTextColor = Yellow,
                         cursorColor = Yellow,
                         focusedBorderColor = Yellow,
-                        unfocusedBorderColor = Yellow.copy(alpha = 0.5f)
+                        unfocusedBorderColor = Yellow.copy(alpha = 0.5f),
+                        unfocusedLabelColor = Yellow, // Añadido para consistencia
+                        focusedLabelColor = Yellow // Añadido para consistencia
                     )
                 )
 
@@ -101,12 +109,16 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel = vie
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        textColor = Yellow,
-                        cursorColor = Yellow,
+                    // --- CÓDIGO NUEVO Y CORRECTO ---
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedTextColor = Yellow,
+                        focusedTextColor = Yellow,cursorColor = Yellow,
                         focusedBorderColor = Yellow,
-                        unfocusedBorderColor = Yellow.copy(alpha = 0.5f)
+                        unfocusedBorderColor = Yellow.copy(alpha = 0.5f),
+                        unfocusedLabelColor = Yellow, // Añadido para consistencia
+                        focusedLabelColor = Yellow // Añadido para consistencia
                     )
+
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -122,7 +134,7 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel = vie
 
                 Button(
                     onClick = { authViewModel.login(LoginRequest(email, password)) },
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Yellow),
+                    colors = ButtonDefaults.buttonColors(containerColor = Yellow),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
