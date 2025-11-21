@@ -24,7 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import coil.compose.rememberAsyncImagePainter
+import coil.compose.AsyncImage
 import com.example.tallerintegrador.data.model.pelicula
 import com.example.tallerintegrador.feature.peliculas.PeliculaViewModel
 import com.example.tallerintegrador.ui.theme.DarkBlue
@@ -42,7 +42,7 @@ fun HomeScreen(viewModel: PeliculaViewModel, navController: NavController? = nul
 
     val peliculasPorGenero = mutableMapOf<String, MutableList<pelicula>>()
     peliculas.forEach { pelicula ->
-        pelicula.genero.split(',').forEach { genero ->
+        pelicula.genre.split(',').forEach { genero ->
             val trimmedGenero = genero.trim()
             peliculasPorGenero.getOrPut(trimmedGenero) { mutableListOf() }.add(pelicula)
         }
@@ -119,7 +119,7 @@ fun HomeScreenContent(
                                     MovieCard(
                                         pelicula = pelicula,
                                         onClick = {
-                                            val encodedTitulo = Uri.encode(pelicula.titulo)
+                                            val encodedTitulo = Uri.encode(pelicula.title)
                                             navController?.navigate("detalle_pelicula/$encodedTitulo")
                                         }
                                     )
@@ -249,18 +249,21 @@ fun MovieCard(pelicula: pelicula, onClick: () -> Unit = {}) {
             .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Image(
-            painter = rememberAsyncImagePainter(pelicula.posterUrl),
-            contentDescription = pelicula.titulo,
+        // --- CÓDIGO NUEVO Y CORRECTO ---
+// No olvides el import: import coil.compose.AsyncImage
+        AsyncImage( // <-- Componente moderno de Coil
+            model = pelicula.posterUrl, // Se usa el parámetro 'model'
+            contentDescription = pelicula.title,
             modifier = Modifier
                 .width(150.dp)
                 .height(225.dp)
                 .clip(RoundedCornerShape(8.dp)),
             contentScale = ContentScale.Crop
         )
+
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = pelicula.titulo,
+            text = pelicula.title,
             color = Color.White,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
@@ -274,14 +277,14 @@ fun MovieCard(pelicula: pelicula, onClick: () -> Unit = {}) {
 @Composable
 fun HomeScreenPreview() {
     val dummyPeliculas = listOf(
-        pelicula("The Dark Knight", "...", "Acción, Crimen", 152, "url", "url"),
-        pelicula("Mad Max: Fury Road", "...", "Acción", 120, "url", "url"),
-        pelicula("Shrek", "...", "Animación", 90, "url", "url"),
-        pelicula("Spider-Man: Into the Spider-Verse", "...", "Animación", 117, "url", "url")
+        pelicula( title = "The Dark Knight", description = "...", posterUrl = "url", videoUrl = "url", durationMinutes = 152, genre = "Acción, Crimen"),
+        pelicula(title = "Mad Max: Fury Road", description = "...", posterUrl = "url", videoUrl = "url", durationMinutes = 120, genre = "Acción"),
+        pelicula( title = "Shrek", description = "...", posterUrl = "url", videoUrl = "url", durationMinutes = 90, genre = "Animación"),
+        pelicula(title = "Spider-Man: Into the Spider-Verse", description = "...", posterUrl = "url", videoUrl = "url", durationMinutes = 117, genre = "Animación")
     )
     val peliculasPorGenero = mutableMapOf<String, MutableList<pelicula>>()
     dummyPeliculas.forEach { pelicula ->
-        pelicula.genero.split(',').forEach { genero ->
+        pelicula.genre.split(',').forEach { genero ->
             val trimmedGenero = genero.trim()
             peliculasPorGenero.getOrPut(trimmedGenero) { mutableListOf() }.add(pelicula)
         }

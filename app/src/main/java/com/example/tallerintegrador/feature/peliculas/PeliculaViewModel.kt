@@ -45,7 +45,7 @@ class PeliculaViewModel(private val repository: PeliculaRepository) : ViewModel(
                 // Simula la búsqueda en la lista ya cargada o podrías llamar a un nuevo método del repositorio.
                 // Para este ejemplo, buscamos en la lista que ya tenemos.
                 // En un caso real, sería mejor: repository.getPeliculaPorTitulo(titulo)
-                val peliculaEncontrada = _peliculas.value.find { it.titulo == titulo }
+                val peliculaEncontrada = _peliculas.value.find { it.title == titulo }
                 _peliculaSeleccionada.value = peliculaEncontrada
             } catch (e: Exception) {
                 // Manejar el error
@@ -73,7 +73,7 @@ class PeliculaViewModel(private val repository: PeliculaRepository) : ViewModel(
             )
 
             // Solo para depuración, puedes imprimir un mensaje.
-            println("Cambiando estado de favorito para: ${pelicula.titulo}")
+            println("Cambiando estado de favorito para: ${pelicula.title}")
         }
     }
 }
