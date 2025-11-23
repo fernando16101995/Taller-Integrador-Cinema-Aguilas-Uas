@@ -14,9 +14,12 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
+
+import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.material3.CardDefaults
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.DateRange
@@ -94,13 +97,16 @@ fun CategoriasScreen() {
 @Composable
 fun CategoriaCard(categoria: Categoria) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
             .height(120.dp)
             .clickable { /* TODO: Navegar a películas por categoría */ },
         shape = RoundedCornerShape(12.dp),
-        backgroundColor = categoria.color.copy(alpha = 0.2f),
-        elevation = 4.dp
+        colors = CardDefaults.cardColors(
+            containerColor = categoria.color.copy(alpha = 0.2f) // 'backgroundColor' se convierte en 'containerColor'
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 4.dp // 'elevation' se configura dentro de un objeto
+        )
     ) {
         Column(
             modifier = Modifier

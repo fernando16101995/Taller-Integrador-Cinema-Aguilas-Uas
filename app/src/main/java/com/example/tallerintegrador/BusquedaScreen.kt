@@ -7,7 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
@@ -35,9 +36,9 @@ fun BusquedaScreen(viewModel: PeliculaViewModel) {
         emptyList()
     } else {
         peliculas.filter {
-            it.titulo.contains(searchQuery, ignoreCase = true) ||
-                    it.genero.contains(searchQuery, ignoreCase = true) ||
-                    it.sinopsis.contains(searchQuery, ignoreCase = true)
+            it.title.contains(searchQuery, ignoreCase = true) ||
+                    it.genre.contains(searchQuery, ignoreCase = true) ||
+                    it.description.contains(searchQuery, ignoreCase = true)
         }
     }
 
@@ -79,12 +80,21 @@ fun BusquedaScreen(viewModel: PeliculaViewModel) {
                     }
                 }
             },
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                textColor = Color.White,
+            // --- CÓDIGO NUEVO Y CORRECTO ---
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedTextColor = Color.White,
+                focusedTextColor = Color.White,
                 cursorColor = Yellow,
                 focusedBorderColor = Yellow,
-                unfocusedBorderColor = Yellow.copy(alpha = 0.5f)
+                unfocusedBorderColor = Yellow.copy(alpha = 0.5f),
+                unfocusedPlaceholderColor = Color.White.copy(alpha = 0.6f),
+                focusedPlaceholderColor = Color.White.copy(alpha = 0.6f),
+                unfocusedLeadingIconColor = Yellow,
+                focusedLeadingIconColor = Yellow,
+                unfocusedTrailingIconColor = Yellow,
+                focusedTrailingIconColor = Yellow,
             ),
+
             shape = RoundedCornerShape(12.dp)
         )
 
@@ -148,8 +158,12 @@ fun SearchResultItem(pelicula: pelicula) {
             .fillMaxWidth()
             .clickable { /* TODO: Ver detalles de la película */ },
         shape = RoundedCornerShape(12.dp),
-        backgroundColor = Color.White.copy(alpha = 0.1f),
-        elevation = 4.dp
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.1f)
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 4.dp
+        )
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -157,7 +171,7 @@ fun SearchResultItem(pelicula: pelicula) {
         ) {
             Image(
                 painter = rememberAsyncImagePainter(pelicula.posterUrl),
-                contentDescription = pelicula.titulo,
+                contentDescription = pelicula.title,
                 modifier = Modifier
                     .width(80.dp)
                     .height(120.dp)
@@ -171,26 +185,26 @@ fun SearchResultItem(pelicula: pelicula) {
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = pelicula.titulo,
+                    text = pelicula.title,
                     color = Yellow,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = pelicula.genero,
+                    text = pelicula.genre,
                     color = Color.White.copy(alpha = 0.7f),
                     fontSize = 14.sp
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "${pelicula.duracion} min",
+                    text = "${pelicula.durationMinutes} min",
                     color = Color.White.copy(alpha = 0.6f),
                     fontSize = 12.sp
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = pelicula.sinopsis,
+                    text = pelicula.description,
                     color = Color.White.copy(alpha = 0.8f),
                     fontSize = 13.sp,
                     maxLines = 2
