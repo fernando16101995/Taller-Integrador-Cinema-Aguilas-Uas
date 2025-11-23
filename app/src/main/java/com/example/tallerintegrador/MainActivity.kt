@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
@@ -30,41 +29,54 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainNavigation() {
     val navController = rememberNavController()
+
+    // Crear una instancia única de AuthViewModel para toda la app
     val authViewModel: AuthViewModel = viewModel()
 
-    // Dependencias
+    // Dependencias para películas
     val apiService = RetrofitClient.instance
     val peliculaRepository = PeliculaRepository(apiService)
     val peliculaViewModelFactory = ViewModelFactory(peliculaRepository)
 
     NavHost(navController, startDestination = "welcome") {
-        composable("welcome") { WelcomeScreen(navController) }
-        composable("login") { LoginScreen(navController, authViewModel) }
-        composable("register") { RegisterScreen(navController, authViewModel) }
+        composable("welcome") {
+            WelcomeScreen(navController)
+        }
+
+        composable("login") {
+            LoginScreen(navController, authViewModel)
+        }
+
+        composable("register") {
+            RegisterScreen(navController, authViewModel)
+        }
+
         composable("home") {
             val peliculaViewModel: PeliculaViewModel = viewModel(factory = peliculaViewModelFactory)
-            HomeScreen(peliculaViewModel, navController)
+            HomeScreen(
+                viewModel = peliculaViewModel,
+                navController = navController,
+                authViewModel = authViewModel
+            )
         }
-        // Nueva ruta para detalles de película (usando título)
+
+        // ✅ RUTA ACTUALIZADA: Ahora usa ID de película en lugar de título
         composable(
-            route = "detalle_pelicula/{peliculaTitulo}",
-            arguments = listOf(navArgument("peliculaTitulo") { type = NavType.StringType })
+            route = "detalle_pelicula/{peliculaId}",
+            arguments = listOf(
+                navArgument("peliculaId") {
+                    type = NavType.IntType
+                }
+            )
         ) { backStackEntry ->
-            val peliculaTitulo = backStackEntry.arguments?.getString("peliculaTitulo") ?: ""
+            val peliculaId = backStackEntry.arguments?.getInt("peliculaId") ?: 0
             val peliculaViewModel: PeliculaViewModel = viewModel(factory = peliculaViewModelFactory)
+
             DetallePeliculaScreen(
-                peliculaTitulo = peliculaTitulo,
+                peliculaId = peliculaId,
                 viewModel = peliculaViewModel,
                 navController = navController
             )
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MainNavigationPreview() {
-    TallerIntegradorTheme {
-        MainNavigation()
     }
 }

@@ -6,8 +6,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.Icons
@@ -18,16 +16,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.tallerintegrador.auth.AuthViewModel
+import com.example.tallerintegrador.data.local.TokenManager
 import com.example.tallerintegrador.ui.theme.DarkBlue
 import com.example.tallerintegrador.ui.theme.Yellow
 
 @Composable
-fun PerfilScreen(navController: NavController?) {
+fun PerfilScreen(
+    navController: NavController?,
+    authViewModel: AuthViewModel = viewModel() // ⭐ Añadimos AuthViewModel
+) {
     var showLogoutDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val tokenManager = remember { TokenManager(context.applicationContext) }
+
+    // ⭐ Obtener información del usuario desde TokenManager
+    val userName = tokenManager.getUserName() ?: "Usuario Demo"
+    val userEmail = tokenManager.getUserEmail() ?: "usuario@demo.com"
 
     Column(
         modifier = Modifier
@@ -60,15 +71,17 @@ fun PerfilScreen(navController: NavController?) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // ⭐ Mostrar nombre real del usuario
             Text(
-                text = "Usuario Demo",
+                text = userName,
                 color = Yellow,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
 
+            // ⭐ Mostrar email real del usuario
             Text(
-                text = "usuario@demo.com",
+                text = userEmail,
                 color = Color.White.copy(alpha = 0.7f),
                 fontSize = 16.sp
             )
@@ -150,8 +163,9 @@ fun PerfilScreen(navController: NavController?) {
             }
 
             item {
+                // ⭐ Opción de cerrar sesión
                 ProfileOption(
-                    icon = Icons.AutoMirrored.Filled.ExitToApp, // <--- Esta es la versión correcta
+                    icon = Icons.AutoMirrored.Filled.ExitToApp,
                     title = "Cerrar Sesión",
                     subtitle = "Salir de tu cuenta",
                     onClick = { showLogoutDialog = true },
@@ -165,9 +179,8 @@ fun PerfilScreen(navController: NavController?) {
         }
     }
 
-    // Diálogo de confirmación de cierre de sesión
+    // ⭐ Diálogo de confirmación de cierre de sesión
     if (showLogoutDialog) {
-        // --- CÓDIGO NUEVO Y CORRECTO ---
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
             title = {
@@ -187,6 +200,9 @@ fun PerfilScreen(navController: NavController?) {
                 TextButton(
                     onClick = {
                         showLogoutDialog = false
+                        // ⭐ CERRAR SESIÓN
+                        authViewModel.logout()
+                        // ⭐ Navegar a WelcomeScreen y limpiar el stack
                         navController?.navigate("welcome") {
                             popUpTo(0) { inclusive = true }
                         }
@@ -200,10 +216,9 @@ fun PerfilScreen(navController: NavController?) {
                     Text("Cancelar", color = Yellow)
                 }
             },
-            containerColor = DarkBlue, // <--- El parámetro correcto es 'containerColor'
+            containerColor = DarkBlue,
             shape = RoundedCornerShape(16.dp)
         )
-
     }
 }
 
@@ -240,11 +255,12 @@ fun ProfileOption(
             .padding(horizontal = 16.dp, vertical = 6.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.05f) // 'backgroundColor' ahora es 'containerColor'
+            containerColor = Color.White.copy(alpha = 0.05f)
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp // 'elevation' se configura así
-        )
+            defaultElevation = 2.dp
+        ),
+        onClick = onClick
     ) {
         Row(
             modifier = Modifier
