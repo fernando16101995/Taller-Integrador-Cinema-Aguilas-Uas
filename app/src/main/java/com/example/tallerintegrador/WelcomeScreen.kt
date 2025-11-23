@@ -40,13 +40,13 @@ fun WelcomeScreen(navController: NavController) {
 
         // Contenido de la pantalla
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize().statusBarsPadding()
         ) {
-            // TopBar - solo con botones a la derecha
+            // TopBar - solo con botones a la dercha
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(25.dp),
                 horizontalArrangement = Arrangement.End, // Alineado a la derecha
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -64,14 +64,15 @@ fun WelcomeScreen(navController: NavController) {
                     Text("Registrarse", color = DarkBlue)
                 }
             }
-            Spacer(modifier = Modifier.height(32.dp))
 
             // Contenido Principal
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .weight(1f)
                     .padding(horizontal = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = "Tu cine en casa, fácil y rápido",
@@ -149,4 +150,3 @@ fun WelcomeScreenPreview() {
         WelcomeScreen(rememberNavController())
     }
 }
-
