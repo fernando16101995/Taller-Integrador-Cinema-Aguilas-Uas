@@ -8,17 +8,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -26,38 +25,50 @@ import coil.compose.AsyncImage
 import com.example.tallerintegrador.data.model.pelicula
 import com.example.tallerintegrador.feature.peliculas.PeliculaViewModel
 import com.example.tallerintegrador.ui.theme.DarkBlue
-import com.example.tallerintegrador.ui.theme.TallerIntegradorTheme
 import com.example.tallerintegrador.ui.theme.Yellow
 import com.example.tallerintegrador.feature.favoritos.FavoritosViewModel
-import com.example.tallerintegrador.core.FavoritosViewModelFactory
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.ui.platform.LocalContext
-import android.app.Application
 import com.example.tallerintegrador.auth.AuthViewModel
 
+/**
+ * ✅ ACTUALIZADO: Ahora recibe FavoritosViewModel como parámetro
+ */
+// ✅ CAMBIOS CLAVE EN HomeScreen.kt
 
 @Composable
 fun HomeScreen(
     viewModel: PeliculaViewModel,
     navController: NavController? = null,
-    authViewModel: AuthViewModel = viewModel()
+    authViewModel: AuthViewModel,
+    favoritosViewModel: FavoritosViewModel
 ) {
     val peliculas by viewModel.peliculas.collectAsState()
+    val isLoading by viewModel.isLoadingList.collectAsState()
+    val favoritosIds by favoritosViewModel.favoritosIds.collectAsState() // ✅ NUEVO
     var selectedTab by remember { mutableIntStateOf(0) }
 
+    // ✅ Carga películas SOLO si no hay datos
     LaunchedEffect(Unit) {
-        // Solo recarga si por alguna razón viene vacío
-        if (viewModel.peliculas.value.isEmpty()) {
+        if (peliculas.isEmpty()) {
             viewModel.getPeliculas()
         }
     }
 
-    val peliculasPorGenero = mutableMapOf<String, MutableList<pelicula>>()
-    peliculas.forEach { pelicula ->
-        pelicula.genre.split(',').forEach { genero ->
-            val trimmedGenero = genero.trim()
-            peliculasPorGenero.getOrPut(trimmedGenero) { mutableListOf() }.add(pelicula)
+    // ✅ Sincroniza favoritos SOLO al entrar por primera vez
+    LaunchedEffect(Unit) {
+        if (favoritosIds.isEmpty()) {
+            favoritosViewModel.cargarFavoritos()
         }
+    }
+
+    val peliculasPorGenero = remember(peliculas) {
+        val map = mutableMapOf<String, MutableList<pelicula>>()
+        peliculas.forEach { pelicula ->
+            pelicula.genre.split(',').forEach { genero ->
+                val trimmedGenero = genero.trim()
+                map.getOrPut(trimmedGenero) { mutableListOf() }.add(pelicula)
+            }
+        }
+        map
     }
 
     HomeScreenContent(
@@ -66,9 +77,16 @@ fun HomeScreen(
         onTabSelected = { selectedTab = it },
         viewModel = viewModel,
         navController = navController,
-        authViewModel = authViewModel
+        authViewModel = authViewModel,
+        favoritosViewModel = favoritosViewModel,
+        isLoading = isLoading,
+        favoritosIds = favoritosIds // ✅ NUEVO: Pasa los IDs para marcar favoritos
     )
 }
+
+// ✅ FRAGMENTO ACTUALIZADO de HomeScreen.kt
+// Solo muestra la sección que cambia (el switch del selectedTab)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenContent(
@@ -77,27 +95,30 @@ fun HomeScreenContent(
     onTabSelected: (Int) -> Unit,
     viewModel: PeliculaViewModel? = null,
     navController: NavController? = null,
-    authViewModel: AuthViewModel? = null
+    authViewModel: AuthViewModel? = null,
+    favoritosViewModel: FavoritosViewModel? = null,
+    isLoading: Boolean = false,
+    favoritosIds: Set<Int> = emptySet()
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("CinemasAguilasUas", color = Yellow) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBlue, // Color de fondo
-                    titleContentColor = Yellow, // Color del título
-                    actionIconContentColor = Color.White // Color de los iconos de acción
+                    containerColor = DarkBlue,
+                    titleContentColor = Yellow,
+                    actionIconContentColor = Color.White
                 ),
                 actions = {
                     TextButton(onClick = {
-                        // Ir a la pestaña de perfil
                         onTabSelected(4)
                     }) {
                         Text("Mi perfil", color = Yellow)
                     }
                     TextButton(onClick = {
-                        // ⭐ Cerrar sesión desde el TopBar
                         authViewModel?.logout()
+                        viewModel?.clearCache()
+                        favoritosViewModel?.clearCache()
                         navController?.navigate("welcome") {
                             popUpTo(0) { inclusive = true }
                         }
@@ -113,35 +134,46 @@ fun HomeScreenContent(
                 onTabSelected = onTabSelected
             )
         },
-        containerColor = DarkBlue // <--- Parámetro correcto para el fondo
+        containerColor = DarkBlue
     ) { padding ->
         when (selectedTab) {
             0 -> {
-                // Pantalla de Inicio
-                LazyColumn(modifier = Modifier.padding(padding)) {
-                    peliculasPorGenero.forEach { (genero, peliculasDelGenero) ->
-                        item {
-                            Text(
-                                text = genero,
-                                color = Yellow,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
-                            )
-                        }
-                        item {
-                            LazyRow(
-                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                items(peliculasDelGenero) { pelicula ->
-                                    MovieCard(
-                                        pelicula = pelicula,
-                                        onClick = {
-
-                                            navController?.navigate("detalle_pelicula/${pelicula.id}")
-                                        }
-                                    )
+                // Pantalla de Inicio con indicador de carga
+                if (isLoading && peliculasPorGenero.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = Yellow)
+                    }
+                } else {
+                    LazyColumn(modifier = Modifier.padding(padding)) {
+                        peliculasPorGenero.forEach { (genero, peliculasDelGenero) ->
+                            item {
+                                Text(
+                                    text = genero,
+                                    color = Yellow,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
+                                )
+                            }
+                            item {
+                                LazyRow(
+                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    items(peliculasDelGenero) { pelicula ->
+                                        MovieCard(
+                                            pelicula = pelicula,
+                                            isFavorite = favoritosIds.contains(pelicula.id),
+                                            onClick = {
+                                                navController?.navigate("detalle_pelicula/${pelicula.id}")
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -149,41 +181,33 @@ fun HomeScreenContent(
                 }
             }
             1 -> {
-                // Pantalla de Categorías
+                // ✅ ACTUALIZADO: Ahora pasa navController a CategoriasScreen
                 Box(modifier = Modifier.padding(padding)) {
-                    CategoriasScreen()
+                    CategoriasScreen(navController = navController)
                 }
             }
             2 -> {
-                // Pantalla de Búsqueda
                 Box(modifier = Modifier.padding(padding)) {
-                    viewModel?.let { BusquedaScreen(viewModel = it,
-                        navController = navController) }
+                    viewModel?.let {
+                        BusquedaScreen(
+                            viewModel = it,
+                            navController = navController
+                        )
+                    }
                 }
             }
             3 -> {
-                val context = LocalContext.current
-                val favoritosViewModel: FavoritosViewModel = viewModel(
-                    factory = FavoritosViewModelFactory(context.applicationContext as Application)
-                )
-
-                // 🔥 Cargar favoritos SIEMPRE que se abra la pestaña
-                LaunchedEffect(Unit) {
-                    favoritosViewModel.cargarFavoritos()
-                }
-
                 Box(modifier = Modifier.padding(paddingValues = padding)) {
-                    FavoritosScreen(
-                        peliculaViewModel = viewModel,
-                        navController = navController,
-                        favoritosViewModel = favoritosViewModel   // <-- se lo pasamos
-                    )
+                    favoritosViewModel?.let { favsVM ->
+                        FavoritosScreen(
+                            peliculaViewModel = viewModel,
+                            navController = navController,
+                            favoritosViewModel = favsVM
+                        )
+                    }
                 }
             }
-
-
             4 -> {
-                // Pantalla de Perfil
                 Box(modifier = Modifier.padding(padding)) {
                     authViewModel?.let {
                         PerfilScreen(navController, it)
@@ -193,18 +217,16 @@ fun HomeScreenContent(
         }
     }
 }
-
 @Composable
 fun BottomNavigationBar(
     selectedTab: Int,
     onTabSelected: (Int) -> Unit
 ) {
     NavigationBar(
-        containerColor = DarkBlue, // Color de fondo de la barra
-        contentColor = Yellow, // Color por defecto para el contenido
-        tonalElevation = 8.dp // Equivalente a 'elevation'
+        containerColor = DarkBlue,
+        contentColor = Yellow,
+        tonalElevation = 8.dp
     ) {
-        // Ítem de Inicio
         NavigationBarItem(
             icon = { Icon(Icons.Filled.Home, contentDescription = "Inicio") },
             label = { Text("Inicio", fontSize = 11.sp) },
@@ -215,10 +237,9 @@ fun BottomNavigationBar(
                 unselectedIconColor = Color.White.copy(alpha = 0.6f),
                 selectedTextColor = Yellow,
                 unselectedTextColor = Color.White.copy(alpha = 0.6f),
-                indicatorColor = DarkBlue.copy(alpha=0.2f) // Color del "círculo" indicador
+                indicatorColor = DarkBlue.copy(alpha = 0.2f)
             )
         )
-        // Ítem de Categorías
         NavigationBarItem(
             icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Categorías") },
             label = { Text("Categorías", fontSize = 11.sp) },
@@ -229,10 +250,9 @@ fun BottomNavigationBar(
                 unselectedIconColor = Color.White.copy(alpha = 0.6f),
                 selectedTextColor = Yellow,
                 unselectedTextColor = Color.White.copy(alpha = 0.6f),
-                indicatorColor = DarkBlue.copy(alpha=0.2f)
+                indicatorColor = DarkBlue.copy(alpha = 0.2f)
             )
         )
-        // Ítem de Búsqueda
         NavigationBarItem(
             icon = { Icon(Icons.Filled.Search, contentDescription = "Búsqueda") },
             label = { Text("Búsqueda", fontSize = 11.sp) },
@@ -243,10 +263,9 @@ fun BottomNavigationBar(
                 unselectedIconColor = Color.White.copy(alpha = 0.6f),
                 selectedTextColor = Yellow,
                 unselectedTextColor = Color.White.copy(alpha = 0.6f),
-                indicatorColor = DarkBlue.copy(alpha=0.2f)
+                indicatorColor = DarkBlue.copy(alpha = 0.2f)
             )
         )
-        // Ítem de Favoritos
         NavigationBarItem(
             icon = { Icon(Icons.Filled.Favorite, contentDescription = "Favoritos") },
             label = { Text("Favoritos", fontSize = 11.sp) },
@@ -257,10 +276,9 @@ fun BottomNavigationBar(
                 unselectedIconColor = Color.White.copy(alpha = 0.6f),
                 selectedTextColor = Yellow,
                 unselectedTextColor = Color.White.copy(alpha = 0.6f),
-                indicatorColor = DarkBlue.copy(alpha=0.2f)
+                indicatorColor = DarkBlue.copy(alpha = 0.2f)
             )
         )
-        // Ítem de Perfil
         NavigationBarItem(
             icon = { Icon(Icons.Filled.Person, contentDescription = "Perfil") },
             label = { Text("Perfil", fontSize = 11.sp) },
@@ -271,67 +289,55 @@ fun BottomNavigationBar(
                 unselectedIconColor = Color.White.copy(alpha = 0.6f),
                 selectedTextColor = Yellow,
                 unselectedTextColor = Color.White.copy(alpha = 0.6f),
-                indicatorColor = DarkBlue.copy(alpha=0.2f)
+                indicatorColor = DarkBlue.copy(alpha = 0.2f)
             )
         )
     }
 }
-
-
+// ✅ MovieCard actualizada con indicador de favorito
 @Composable
-fun MovieCard(pelicula: pelicula, onClick: () -> Unit = {}) {
-    Column(
-        modifier = Modifier
-            .width(150.dp)
-            .clickable(onClick = onClick),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        AsyncImage( // <-- Componente moderno de Coil
-            model = pelicula.posterUrl, // Se usa el parámetro 'model'
-            contentDescription = pelicula.title,
-            modifier = Modifier
-                .width(150.dp)
-                .height(225.dp)
-                .clip(RoundedCornerShape(8.dp)),
-            contentScale = ContentScale.Crop
-        )
+fun MovieCard(
+    pelicula: pelicula,
+    isFavorite: Boolean = false, // ✅ NUEVO
+    onClick: () -> Unit = {}
+) {
+    Box(modifier = Modifier.width(150.dp)) {
+        Column(
+            modifier = Modifier.clickable(onClick = onClick),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            AsyncImage(
+                model = pelicula.posterUrl,
+                contentDescription = pelicula.title,
+                modifier = Modifier
+                    .width(150.dp)
+                    .height(225.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Crop
+            )
 
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = pelicula.title,
-            color = Color.White,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun HomeScreenPreview() {
-    val dummyPeliculas = listOf(
-        pelicula(id = 1,title = "The Dark Knight", description = "...", posterUrl = "url", videoUrl = "url", durationMinutes = 152, genre = "Acción, Crimen"),
-        pelicula(id = 2,title = "Mad Max: Fury Road", description = "...", posterUrl = "url", videoUrl = "url", durationMinutes = 120, genre = "Acción"),
-        pelicula(id = 3, title = "Shrek", description = "...", posterUrl = "url", videoUrl = "url", durationMinutes = 90, genre = "Animación"),
-        pelicula(id = 4,title = "Spider-Man: Into the Spider-Verse", description = "...", posterUrl = "url", videoUrl = "url", durationMinutes = 117, genre = "Animación")
-    )
-    val peliculasPorGenero = mutableMapOf<String, MutableList<pelicula>>()
-    dummyPeliculas.forEach { pelicula ->
-        pelicula.genre.split(',').forEach { genero ->
-            val trimmedGenero = genero.trim()
-            peliculasPorGenero.getOrPut(trimmedGenero) { mutableListOf() }.add(pelicula)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = pelicula.title,
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
         }
-    }
 
-    TallerIntegradorTheme {
-        HomeScreenContent(
-            peliculasPorGenero = peliculasPorGenero,
-            selectedTab = 0,
-            onTabSelected = {},
-            viewModel = null,
-            navController = null
-        )
+        // ✅ NUEVO: Indicador de favorito
+        if (isFavorite) {
+            Icon(
+                imageVector = Icons.Filled.Favorite,
+                contentDescription = "Favorito",
+                tint = Color.Red,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+                    .size(24.dp)
+            )
+        }
     }
 }

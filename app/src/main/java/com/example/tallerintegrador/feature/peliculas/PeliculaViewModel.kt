@@ -19,48 +19,71 @@ sealed class PeliculaDetailState {
     data class Error(val message: String) : PeliculaDetailState()
 }
 
-class PeliculaViewModel(private val repository: PeliculaRepository) : ViewModel() {
+/**
+ * ✅ ViewModel con cache inteligente
+ *
+ * - Ya no carga películas en init() automáticamente
+ * - Usa cache para evitar requests duplicadas
+ * - Maneja estado de carga correctamente
+ */
+class PeliculaViewModel(
+    private val repository: PeliculaRepository
+) : ViewModel() {
 
     // --- ESTADO PARA LA LISTA DE PELÍCULAS (HomeScreen) ---
+
     private val _peliculas = MutableStateFlow<List<pelicula>>(emptyList())
     val peliculas: StateFlow<List<pelicula>> = _peliculas.asStateFlow()
 
-    // --- ✅ NUEVO: ESTADO ROBUSTO PARA DETALLES DE PELÍCULA ---
+    private val _isLoadingList = MutableStateFlow(false)
+    val isLoadingList: StateFlow<Boolean> = _isLoadingList.asStateFlow()
+
+    // --- ESTADO PARA DETALLES DE PELÍCULA ---
+
     private val _peliculaDetail = MutableStateFlow<PeliculaDetailState>(PeliculaDetailState.Idle)
     val peliculaDetail: StateFlow<PeliculaDetailState> = _peliculaDetail.asStateFlow()
 
-    // Cargar películas automáticamente al iniciar
-    init {
-        getPeliculas()
-    }
+    // ========== LISTA DE PELÍCULAS ==========
 
     /**
-     * Obtiene la lista completa de películas desde el repositorio.
-     * Usado por la pantalla principal (HomeScreen).
+     * ✅ Obtiene películas con cache inteligente
+     *
+     * @param forceRefresh Si es true, ignora el cache y fuerza red
      */
-    fun getPeliculas() {
+    fun getPeliculas(forceRefresh: Boolean = false) {
+        // Si ya hay películas cargadas y no se fuerza refresh, no hace nada
+        if (_peliculas.value.isNotEmpty() && !forceRefresh) {
+            return
+        }
+
         viewModelScope.launch {
+            _isLoadingList.value = true
+
             try {
-                val peliculasList = repository.getPeliculas()
+                val peliculasList = repository.getPeliculas(forceRefresh)
                 _peliculas.value = peliculasList
             } catch (e: Exception) {
-                // Podrías agregar un estado de error para la lista si lo necesitas
+                // Puedes agregar un estado de error si lo necesitas
+                _peliculas.value = emptyList()
+            } finally {
+                _isLoadingList.value = false
             }
         }
     }
 
+    // ========== DETALLES DE PELÍCULA ==========
+
     /**
-     * ✅ NUEVO: Carga una película específica por ID directamente desde la API.
-     * Esta es la forma ROBUSTA de obtener detalles, ya que no depende de la
-     * lista en memoria que podría estar vacía si Android mata la app.
+     * ✅ Carga detalles con cache inteligente
      *
-     * @param peliculaId ID de la película a cargar
+     * Primero busca en cache, luego en red si es necesario
      */
-    fun getPeliculaById(peliculaId: Int) {
+    fun getPeliculaById(peliculaId: Int, forceRefresh: Boolean = false) {
         viewModelScope.launch {
             _peliculaDetail.value = PeliculaDetailState.Loading
+
             try {
-                val pelicula = repository.getPeliculaById(peliculaId)
+                val pelicula = repository.getPeliculaById(peliculaId, forceRefresh)
                 _peliculaDetail.value = PeliculaDetailState.Success(pelicula)
             } catch (e: Exception) {
                 _peliculaDetail.value = PeliculaDetailState.Error(
@@ -71,11 +94,8 @@ class PeliculaViewModel(private val repository: PeliculaRepository) : ViewModel(
     }
 
     /**
-     * ✅ MÉTODO DE RESPALDO: Busca primero en la lista local, pero si no encuentra
-     * o la lista está vacía, hace una llamada a la API.
-     *
-     * Este método es útil para optimizar: primero intenta usar datos que ya tiene,
-     * pero si no los encuentra, los pide a la API.
+     * ✅ Método optimizado: busca primero en la lista local
+     * Si no está, pide al cache/red
      */
     fun getPeliculaByIdWithFallback(peliculaId: Int) {
         viewModelScope.launch {
@@ -83,19 +103,11 @@ class PeliculaViewModel(private val repository: PeliculaRepository) : ViewModel(
             val peliculaLocal = _peliculas.value.find { it.id == peliculaId }
 
             if (peliculaLocal != null) {
-                // ✅ Encontrada en cache local
+                // ✅ Encontrada en memoria
                 _peliculaDetail.value = PeliculaDetailState.Success(peliculaLocal)
             } else {
-                // ❌ No está en cache, debe pedir a la API
-                _peliculaDetail.value = PeliculaDetailState.Loading
-                try {
-                    val pelicula = repository.getPeliculaById(peliculaId)
-                    _peliculaDetail.value = PeliculaDetailState.Success(pelicula)
-                } catch (e: Exception) {
-                    _peliculaDetail.value = PeliculaDetailState.Error(
-                        e.message ?: "Error al cargar los detalles de la película"
-                    )
-                }
+                // ❌ No está en memoria, debe buscar en cache/red
+                getPeliculaById(peliculaId)
             }
         }
     }
@@ -105,5 +117,24 @@ class PeliculaViewModel(private val repository: PeliculaRepository) : ViewModel(
      */
     fun clearPeliculaDetail() {
         _peliculaDetail.value = PeliculaDetailState.Idle
+    }
+
+    // ========== UTILIDADES ==========
+
+    /**
+     * ✅ Limpia el cache (útil para logout)
+     */
+    fun clearCache() {
+        viewModelScope.launch {
+            repository.clearCache()
+            _peliculas.value = emptyList()
+        }
+    }
+
+    /**
+     * ✅ Fuerza refresh de películas
+     */
+    fun refresh() {
+        getPeliculas(forceRefresh = true)
     }
 }

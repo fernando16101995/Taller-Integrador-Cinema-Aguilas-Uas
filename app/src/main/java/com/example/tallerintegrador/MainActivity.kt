@@ -10,10 +10,11 @@ import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.example.tallerintegrador.auth.AuthViewModel
 import com.example.tallerintegrador.core.ViewModelFactory
-import com.example.tallerintegrador.data.network.RetrofitClient
-import com.example.tallerintegrador.data.repository.PeliculaRepository
 import com.example.tallerintegrador.feature.peliculas.PeliculaViewModel
+import com.example.tallerintegrador.feature.favoritos.FavoritosViewModel
 import com.example.tallerintegrador.ui.theme.TallerIntegradorTheme
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,17 +27,22 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/**
+ * ✅ NAVEGACIÓN ACTUALIZADA con ruta de películas por género
+ */
 @Composable
 fun MainNavigation() {
     val navController = rememberNavController()
 
-    // Crear una instancia única de AuthViewModel para toda la app
-    val authViewModel: AuthViewModel = viewModel()
+    // ViewModelFactory única para todos los ViewModels
+    val viewModelFactory = ViewModelFactory(
+        navController.context.applicationContext as android.app.Application
+    )
 
-    // Dependencias para películas
-    val apiService = RetrofitClient.instance
-    val peliculaRepository = PeliculaRepository(apiService)
-    val peliculaViewModelFactory = ViewModelFactory(peliculaRepository)
+    // ViewModels compartidos
+    val authViewModel: AuthViewModel = viewModel()
+    val peliculaViewModel: PeliculaViewModel = viewModel(factory = viewModelFactory)
+    val favoritosViewModel: FavoritosViewModel = viewModel(factory = viewModelFactory)
 
     NavHost(navController, startDestination = "welcome") {
         composable("welcome") {
@@ -44,23 +50,29 @@ fun MainNavigation() {
         }
 
         composable("login") {
-            LoginScreen(navController, authViewModel)
-        }
-
-        composable("register") {
-            RegisterScreen(navController, authViewModel)
-        }
-
-        composable("home") {
-            val peliculaViewModel: PeliculaViewModel = viewModel(factory = peliculaViewModelFactory)
-            HomeScreen(
-                viewModel = peliculaViewModel,
+            LoginScreen(
                 navController = navController,
                 authViewModel = authViewModel
             )
         }
 
-        // ✅ RUTA ACTUALIZADA: Ahora usa ID de película en lugar de título
+        composable("register") {
+            RegisterScreen(
+                navController = navController,
+                authViewModel = authViewModel
+            )
+        }
+
+        composable("home") {
+            HomeScreen(
+                viewModel = peliculaViewModel,
+                navController = navController,
+                authViewModel = authViewModel,
+                favoritosViewModel = favoritosViewModel
+            )
+        }
+
+        // Ruta para detalles de película
         composable(
             route = "detalle_pelicula/{peliculaId}",
             arguments = listOf(
@@ -70,11 +82,32 @@ fun MainNavigation() {
             )
         ) { backStackEntry ->
             val peliculaId = backStackEntry.arguments?.getInt("peliculaId") ?: 0
-            val peliculaViewModel: PeliculaViewModel = viewModel(factory = peliculaViewModelFactory)
 
             DetallePeliculaScreen(
                 peliculaId = peliculaId,
                 viewModel = peliculaViewModel,
+                navController = navController,
+                favoritosViewModel = favoritosViewModel
+            )
+        }
+
+        // ✅ NUEVA RUTA: Películas por género
+        composable(
+            route = "peliculas_por_genero/{genero}",
+            arguments = listOf(
+                navArgument("genero") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val generoEncoded = backStackEntry.arguments?.getString("genero") ?: ""
+            // Decodificar el género (por si tiene caracteres especiales como "Ciencia Ficción")
+            val genero = URLDecoder.decode(generoEncoded, StandardCharsets.UTF_8.toString())
+
+            PeliculasPorGeneroScreen(
+                genero = genero,
+                peliculaViewModel = peliculaViewModel,
+                favoritosViewModel = favoritosViewModel,
                 navController = navController
             )
         }
