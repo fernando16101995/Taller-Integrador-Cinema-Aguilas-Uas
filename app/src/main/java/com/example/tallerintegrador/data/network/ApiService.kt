@@ -27,7 +27,7 @@ interface ApiService {
     @GET("api/favoritos")
     suspend fun getFavoritos(
         @Header("Authorization") authHeader: String
-    ): FavoritosResponse
+    ): List<pelicula> // <--- espera una lista directa
 
     @POST("api/favoritos/{peliculaId}")
     suspend fun addFavorito(

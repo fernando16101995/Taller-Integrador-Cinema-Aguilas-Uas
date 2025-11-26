@@ -1,50 +1,87 @@
 package com.example.tallerintegrador.data.repository
 
+import com.example.tallerintegrador.data.local.cache.CacheManager
 import com.example.tallerintegrador.data.model.pelicula
 import com.example.tallerintegrador.data.network.ApiService
+import kotlinx.coroutines.flow.Flow
 
+/**
+ * Repository de Favoritos con cache local reactivo
+ */
 class FavoritosRepository(
-    private val apiService: ApiService
+    private val apiService: ApiService,
+    private val cacheManager: CacheManager
 ) {
 
     /**
-     * Obtiene la lista de películas favoritas del usuario.
-     * @param token Token puro (sin "Bearer "), por ejemplo: "123abc..."
+     * Obtiene favoritos del servidor y sincroniza el cache
      */
     suspend fun getFavoritos(token: String): List<pelicula> {
-        // ⭐ CAMBIO: Ahora recibimos FavoritosResponse y extraemos la lista
-        val response = apiService.getFavoritos("Bearer $token")
-        return response.favoritos
+        val listaPeliculas = apiService.getFavoritos("Bearer $token")
+        val favoritosIds = listaPeliculas.map { it.id }
+        cacheManager.syncFavoritos(favoritosIds)
+        return listaPeliculas
     }
 
     /**
-     * Agrega una película a favoritos.
-     * ⭐ CAMBIO: Ahora recibimos AddFavoritoResponse
+     * Agrega a favoritos (servidor + cache optimista)
      */
     suspend fun addFavorito(token: String, peliculaId: Int) {
-        apiService.addFavorito("Bearer $token", peliculaId)
-        // La respuesta indica éxito/error, pero no necesitamos hacer nada especial
+        // 1. Actualiza el cache inmediatamente (optimistic update)
+        cacheManager.addFavoritoToCache(peliculaId)
+
+        try {
+            // 2. Sincroniza con el servidor
+            apiService.addFavorito("Bearer $token", peliculaId)
+        } catch (e: Exception) {
+            // Si falla, revierte el cache
+            cacheManager.removeFavoritoFromCache(peliculaId)
+            throw e
+        }
     }
 
     /**
-     * Elimina una película de favoritos.
-     * ⭐ CAMBIO: Ahora recibimos RemoveFavoritoResponse
+     * ✅ Elimina de favoritos (servidor + cache optimista)
      */
     suspend fun removeFavorito(token: String, peliculaId: Int) {
-        apiService.removeFavorito("Bearer $token", peliculaId)
-        // La respuesta indica éxito/error, pero no necesitamos hacer nada especial
+        // 1. Actualiza el cache inmediatamente (optimistic update)
+        cacheManager.removeFavoritoFromCache(peliculaId)
+
+        try {
+            // 2. Sincroniza con el servidor
+            apiService.removeFavorito("Bearer $token", peliculaId)
+        } catch (e: Exception) {
+            // Si falla, revierte el cache
+            cacheManager.addFavoritoToCache(peliculaId)
+            throw e
+        }
     }
 
     /**
-     * Verifica si una película es favorita.
-     * ⭐ CAMBIO: Recibimos CheckFavoritoResponse en lugar de Map<String, Boolean>
+     * ✅ Verifica si es favorito desde el CACHE (sin red)
      */
-    suspend fun isFavorito(token: String, peliculaId: Int): Boolean {
-        return try {
-            val response = apiService.checkFavorito("Bearer $token", peliculaId)
-            response.isFavorite  // ⭐ CAMBIO: Usar el campo del objeto
-        } catch (_: Exception) {
-            false
-        }
+    suspend fun isFavorito(peliculaId: Int): Boolean {
+        return cacheManager.isFavorito(peliculaId)
+    }
+
+    /**
+     * ✅ Flow reactivo de estado de favorito
+     */
+    fun isFavoritoFlow(peliculaId: Int): Flow<Boolean> {
+        return cacheManager.isFavoritoFlow(peliculaId)
+    }
+
+    /**
+     * ✅ Flow reactivo de todos los IDs de favoritos
+     */
+    fun getFavoritosIdsFlow(): Flow<Set<Int>> {
+        return cacheManager.getFavoritosIdsFlow()
+    }
+
+    /**
+     * Limpia el cache de favoritos
+     */
+    suspend fun clearCache() {
+        cacheManager.clearFavoritosCache()
     }
 }

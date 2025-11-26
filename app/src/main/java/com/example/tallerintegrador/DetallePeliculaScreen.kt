@@ -1,6 +1,5 @@
 package com.example.tallerintegrador
 
-import android.app.Application
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -19,10 +18,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.example.tallerintegrador.core.FavoritosViewModelFactory
 import com.example.tallerintegrador.feature.favoritos.FavoritosViewModel
 import com.example.tallerintegrador.feature.peliculas.PeliculaViewModel
 import com.example.tallerintegrador.feature.peliculas.PeliculaDetailState
@@ -34,33 +31,32 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 
 /**
- * ✅ VERSIÓN ROBUSTA: Ahora recibe el ID de la película y carga directamente desde la API
- * Esto garantiza que siempre tengamos los datos, incluso si:
- * - Android mata la app en segundo plano
- * - El usuario llega directamente a esta pantalla por Deep Link
- * - La lista de películas no está cargada en memoria
+ * ✅ ACTUALIZADO: Ahora recibe FavoritosViewModel como parámetro
+ * Ya no crea una nueva instancia internamente
  */
+// ✅ CAMBIOS CLAVE EN DetallePeliculaScreen.kt
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetallePeliculaScreen(
-    peliculaId: Int, // ✅ CAMBIO: Ahora recibimos ID en lugar de título
+    peliculaId: Int,
     viewModel: PeliculaViewModel,
-    navController: NavController
+    navController: NavController,
+    favoritosViewModel: FavoritosViewModel
 ) {
     val context = LocalContext.current
     val peliculaDetailState by viewModel.peliculaDetail.collectAsState()
-    var isFavorite by remember { mutableStateOf(false) }
 
-    val favoritosViewModel: FavoritosViewModel = viewModel(
-        factory = FavoritosViewModelFactory(context.applicationContext as Application)
-    )
+    // ✅ CAMBIO: Usa Flow reactivo en lugar de suspend function
+    val isFavorite by favoritosViewModel.esFavoritoFlow(peliculaId)
+        .collectAsState(initial = false)
 
-    // ✅ CARGA AUTOMÁTICA: Cuando se abre la pantalla, pide la película a la API
+    // Carga automática de la película
     LaunchedEffect(peliculaId) {
         viewModel.getPeliculaByIdWithFallback(peliculaId)
     }
 
-    // ✅ LIMPIEZA: Cuando se sale de la pantalla, limpia el estado
+    // Limpieza cuando se sale
     DisposableEffect(Unit) {
         onDispose {
             viewModel.clearPeliculaDetail()
@@ -88,14 +84,12 @@ fun DetallePeliculaScreen(
         },
         containerColor = DarkBlue
     ) { padding ->
-        // ✅ MANEJO DE ESTADOS
         when (val state = peliculaDetailState) {
             is PeliculaDetailState.Idle -> {
-                // Estado inicial, no hacer nada
+                // Estado inicial
             }
 
             is PeliculaDetailState.Loading -> {
-                // ✅ Mostrar indicador de carga
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -118,7 +112,6 @@ fun DetallePeliculaScreen(
             }
 
             is PeliculaDetailState.Error -> {
-                // ✅ Mostrar error con opción de reintentar
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -150,7 +143,7 @@ fun DetallePeliculaScreen(
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                         Button(
-                            onClick = { viewModel.getPeliculaById(peliculaId) },
+                            onClick = { viewModel.getPeliculaById(peliculaId, forceRefresh = true) },
                             colors = ButtonDefaults.buttonColors(containerColor = Yellow)
                         ) {
                             Text("Reintentar", color = DarkBlue)
@@ -160,13 +153,7 @@ fun DetallePeliculaScreen(
             }
 
             is PeliculaDetailState.Success -> {
-                // ✅ Mostrar contenido de la película
                 val pelicula = state.pelicula
-
-                // Cargar estado de favorito
-                LaunchedEffect(pelicula.id) {
-                    isFavorite = favoritosViewModel.esFavorito(pelicula.id)
-                }
 
                 Column(
                     modifier = Modifier
@@ -230,7 +217,7 @@ fun DetallePeliculaScreen(
                             }
                         }
 
-                        // Gradiente sobre la imagen
+                        // Gradiente
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -246,18 +233,17 @@ fun DetallePeliculaScreen(
                                 )
                         )
 
-                        // Botones de acción en el póster
+                        // Botones de acción
                         Row(
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
                                 .padding(16.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
+                            // ✅ CAMBIO: El botón se actualiza automáticamente con el Flow
                             IconButton(
                                 onClick = {
-                                    val current = isFavorite
-                                    favoritosViewModel.toggleFavorito(pelicula.id, current)
-                                    isFavorite = !current
+                                    favoritosViewModel.toggleFavorito(pelicula.id, isFavorite)
                                 },
                                 modifier = Modifier
                                     .background(
@@ -379,7 +365,7 @@ fun DetallePeliculaScreen(
                             Spacer(modifier = Modifier.height(16.dp))
                         }
 
-                        // Botón de reproducir película
+                        // Botón de reproducir
                         Button(
                             onClick = { /* Reproducir película */ },
                             colors = ButtonDefaults.buttonColors(containerColor = Yellow),
