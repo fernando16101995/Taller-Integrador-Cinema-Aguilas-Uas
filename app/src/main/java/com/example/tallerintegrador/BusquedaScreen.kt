@@ -26,10 +26,9 @@ import com.example.tallerintegrador.data.model.pelicula
 import com.example.tallerintegrador.feature.peliculas.PeliculaViewModel
 import com.example.tallerintegrador.ui.theme.DarkBlue
 import com.example.tallerintegrador.ui.theme.Yellow
-import androidx.navigation.NavController
 
 @Composable
-fun BusquedaScreen(viewModel: PeliculaViewModel, navController: NavController? = null) {
+fun BusquedaScreen(viewModel: PeliculaViewModel) {
     var searchQuery by remember { mutableStateOf("") }
     val peliculas by viewModel.peliculas.collectAsState()
 
@@ -145,8 +144,7 @@ fun BusquedaScreen(viewModel: PeliculaViewModel, navController: NavController? =
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(peliculasFiltradas) { pelicula ->
-                    SearchResultItem(pelicula = pelicula,
-                    navController = navController)
+                    SearchResultItem(pelicula)
                 }
             }
         }
@@ -154,11 +152,11 @@ fun BusquedaScreen(viewModel: PeliculaViewModel, navController: NavController? =
 }
 
 @Composable
-fun SearchResultItem(pelicula: pelicula, navController: NavController?) {
+fun SearchResultItem(pelicula: pelicula) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { navController?.navigate("detalle_pelicula/${pelicula.id}")},
+            .clickable { /* TODO: Ver detalles de la película */ },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.White.copy(alpha = 0.1f)

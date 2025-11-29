@@ -32,10 +32,8 @@ data class LoginRequest(
 data class LoginResponse(
     @SerializedName("access_token")
     val accessToken: String,
-
     @SerializedName("token_type")
     val tokenType: String,
-
     val user: User
 )
 

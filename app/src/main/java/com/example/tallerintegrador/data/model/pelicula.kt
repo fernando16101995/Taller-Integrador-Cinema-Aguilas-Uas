@@ -2,8 +2,7 @@ package com.example.tallerintegrador.data.model
 import com.google.gson.annotations.SerializedName
 
 data class pelicula(
-    @SerializedName("id")
-    val id: Int,
+
     @SerializedName("title")
     val title: String,
     @SerializedName("description")
@@ -20,4 +19,8 @@ data class pelicula(
     val createdAt: String? = null,
     @SerializedName("updated_at")
     val updatedAt: String? = null,
+
+    // Campo local para manejar estado en la UI, no viene del JSON
+    val esFavorita: Boolean = false
 )
+    
