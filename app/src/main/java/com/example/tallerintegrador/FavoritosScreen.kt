@@ -64,7 +64,7 @@ fun FavoritosScreen(
                             navController?.navigate("detalle_pelicula/${peli.id}")
                         },
                         onRemove = {
-                            favoritosViewModel.toggleFavorito(peli.id, true)
+                            favoritosViewModel.toggleFavorito(peli.id, false)
                         }
                     )
                 }

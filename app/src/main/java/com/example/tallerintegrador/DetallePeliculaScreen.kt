@@ -255,9 +255,9 @@ fun DetallePeliculaScreen(
                         ) {
                             IconButton(
                                 onClick = {
-                                    val current = isFavorite
-                                    favoritosViewModel.toggleFavorito(pelicula.id, current)
-                                    isFavorite = !current
+                                    val newFavoriteState = !isFavorite
+                                    favoritosViewModel.toggleFavorito(pelicula.id, newFavoriteState)
+                                    isFavorite = newFavoriteState
                                 },
                                 modifier = Modifier
                                     .background(

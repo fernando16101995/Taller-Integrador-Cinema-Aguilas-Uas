@@ -18,7 +18,6 @@ interface ApiService {
     @GET("api/peliculas")
     suspend fun getPeliculas(): List<pelicula>
 
-    // ✅ NUEVO: Obtener una película específica por ID
     @GET("api/peliculas/{id}")
     suspend fun getPeliculaById(@Path("id") peliculaId: Int): pelicula
 
@@ -26,18 +25,18 @@ interface ApiService {
 
     @GET("api/favoritos")
     suspend fun getFavoritos(
-        @Header("Authorization") authHeader: String
-    ): FavoritosResponse
+        @Header("Authorization") token: String
+    ): List<pelicula>
 
     @POST("api/favoritos/{peliculaId}")
     suspend fun addFavorito(
-        @Header("Authorization") authHeader: String,
+        @Header("Authorization") token: String,
         @Path("peliculaId") peliculaId: Int
     ): AddFavoritoResponse
 
     @DELETE("api/favoritos/{peliculaId}")
     suspend fun removeFavorito(
-        @Header("Authorization") authHeader: String,
+        @Header("Authorization") token: String,
         @Path("peliculaId") peliculaId: Int
     ): RemoveFavoritoResponse
 

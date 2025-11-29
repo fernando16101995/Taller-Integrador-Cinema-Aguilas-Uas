@@ -34,17 +34,17 @@ class FavoritosViewModel(
         }
     }
 
-    fun toggleFavorito(peliculaId: Int, currentlyFavorite: Boolean) {
+    fun toggleFavorito(peliculaId: Int, shouldBeFavorite: Boolean) {
         viewModelScope.launch {
             val token = getTokenOrNull() ?: return@launch
             try {
-                if (currentlyFavorite) {
-                    repository.removeFavorito(token, peliculaId)
-                } else {
+                if (shouldBeFavorite) {
                     repository.addFavorito(token, peliculaId)
+                } else {
+                    repository.removeFavorito(token, peliculaId)
                 }
-                // Actualizamos la lista después del cambio
-                _favoritos.value = repository.getFavoritos(token)
+                // Actualizamos la lista después del cambio para que la UI reaccione
+                cargarFavoritos()
             } catch (_: Exception) {
                 // Manejo de errores si quieres
             }
