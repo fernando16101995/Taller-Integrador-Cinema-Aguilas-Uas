@@ -1,7 +1,5 @@
 package com.example.tallerintegrador
 
-import android.net.Uri
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -30,14 +28,28 @@ import com.example.tallerintegrador.feature.peliculas.PeliculaViewModel
 import com.example.tallerintegrador.ui.theme.DarkBlue
 import com.example.tallerintegrador.ui.theme.TallerIntegradorTheme
 import com.example.tallerintegrador.ui.theme.Yellow
+import com.example.tallerintegrador.feature.favoritos.FavoritosViewModel
+import com.example.tallerintegrador.core.FavoritosViewModelFactory
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.platform.LocalContext
+import android.app.Application
+import com.example.tallerintegrador.auth.AuthViewModel
+
 
 @Composable
-fun HomeScreen(viewModel: PeliculaViewModel, navController: NavController? = null) {
+fun HomeScreen(
+    viewModel: PeliculaViewModel,
+    navController: NavController? = null,
+    authViewModel: AuthViewModel = viewModel()
+) {
     val peliculas by viewModel.peliculas.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(Unit) {
-        viewModel.getPeliculas()
+        // Solo recarga si por alguna razón viene vacío
+        if (viewModel.peliculas.value.isEmpty()) {
+            viewModel.getPeliculas()
+        }
     }
 
     val peliculasPorGenero = mutableMapOf<String, MutableList<pelicula>>()
@@ -53,7 +65,8 @@ fun HomeScreen(viewModel: PeliculaViewModel, navController: NavController? = nul
         selectedTab = selectedTab,
         onTabSelected = { selectedTab = it },
         viewModel = viewModel,
-        navController = navController
+        navController = navController,
+        authViewModel = authViewModel
     )
 }
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,7 +76,8 @@ fun HomeScreenContent(
     selectedTab: Int,
     onTabSelected: (Int) -> Unit,
     viewModel: PeliculaViewModel? = null,
-    navController: NavController? = null
+    navController: NavController? = null,
+    authViewModel: AuthViewModel? = null
 ) {
     Scaffold(
         topBar = {
@@ -75,10 +89,15 @@ fun HomeScreenContent(
                     actionIconContentColor = Color.White // Color de los iconos de acción
                 ),
                 actions = {
-                    TextButton(onClick = { /* TODO: Mi perfil */ }) {
+                    TextButton(onClick = {
+                        // Ir a la pestaña de perfil
+                        onTabSelected(4)
+                    }) {
                         Text("Mi perfil", color = Yellow)
                     }
                     TextButton(onClick = {
+                        // ⭐ Cerrar sesión desde el TopBar
+                        authViewModel?.logout()
                         navController?.navigate("welcome") {
                             popUpTo(0) { inclusive = true }
                         }
@@ -119,8 +138,8 @@ fun HomeScreenContent(
                                     MovieCard(
                                         pelicula = pelicula,
                                         onClick = {
-                                            val encodedTitulo = Uri.encode(pelicula.title)
-                                            navController?.navigate("detalle_pelicula/$encodedTitulo")
+
+                                            navController?.navigate("detalle_pelicula/${pelicula.id}")
                                         }
                                     )
                                 }
@@ -138,19 +157,37 @@ fun HomeScreenContent(
             2 -> {
                 // Pantalla de Búsqueda
                 Box(modifier = Modifier.padding(padding)) {
-                    viewModel?.let { BusquedaScreen(it) }
+                    viewModel?.let { BusquedaScreen(viewModel = it,
+                        navController = navController) }
                 }
             }
             3 -> {
-                // Pantalla de Favoritos
-                Box(modifier = Modifier.padding(padding)) {
-                    viewModel?.let { FavoritosScreen(it) }
+                val context = LocalContext.current
+                val favoritosViewModel: FavoritosViewModel = viewModel(
+                    factory = FavoritosViewModelFactory(context.applicationContext as Application)
+                )
+
+                // 🔥 Cargar favoritos SIEMPRE que se abra la pestaña
+                LaunchedEffect(Unit) {
+                    favoritosViewModel.cargarFavoritos()
+                }
+
+                Box(modifier = Modifier.padding(paddingValues = padding)) {
+                    FavoritosScreen(
+                        peliculaViewModel = viewModel,
+                        navController = navController,
+                        favoritosViewModel = favoritosViewModel   // <-- se lo pasamos
+                    )
                 }
             }
+
+
             4 -> {
                 // Pantalla de Perfil
                 Box(modifier = Modifier.padding(padding)) {
-                    PerfilScreen(navController)
+                    authViewModel?.let {
+                        PerfilScreen(navController, it)
+                    }
                 }
             }
         }
@@ -249,8 +286,6 @@ fun MovieCard(pelicula: pelicula, onClick: () -> Unit = {}) {
             .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // --- CÓDIGO NUEVO Y CORRECTO ---
-// No olvides el import: import coil.compose.AsyncImage
         AsyncImage( // <-- Componente moderno de Coil
             model = pelicula.posterUrl, // Se usa el parámetro 'model'
             contentDescription = pelicula.title,
@@ -277,10 +312,10 @@ fun MovieCard(pelicula: pelicula, onClick: () -> Unit = {}) {
 @Composable
 fun HomeScreenPreview() {
     val dummyPeliculas = listOf(
-        pelicula( title = "The Dark Knight", description = "...", posterUrl = "url", videoUrl = "url", durationMinutes = 152, genre = "Acción, Crimen"),
-        pelicula(title = "Mad Max: Fury Road", description = "...", posterUrl = "url", videoUrl = "url", durationMinutes = 120, genre = "Acción"),
-        pelicula( title = "Shrek", description = "...", posterUrl = "url", videoUrl = "url", durationMinutes = 90, genre = "Animación"),
-        pelicula(title = "Spider-Man: Into the Spider-Verse", description = "...", posterUrl = "url", videoUrl = "url", durationMinutes = 117, genre = "Animación")
+        pelicula(id = 1,title = "The Dark Knight", description = "...", posterUrl = "url", videoUrl = "url", durationMinutes = 152, genre = "Acción, Crimen"),
+        pelicula(id = 2,title = "Mad Max: Fury Road", description = "...", posterUrl = "url", videoUrl = "url", durationMinutes = 120, genre = "Acción"),
+        pelicula(id = 3, title = "Shrek", description = "...", posterUrl = "url", videoUrl = "url", durationMinutes = 90, genre = "Animación"),
+        pelicula(id = 4,title = "Spider-Man: Into the Spider-Verse", description = "...", posterUrl = "url", videoUrl = "url", durationMinutes = 117, genre = "Animación")
     )
     val peliculasPorGenero = mutableMapOf<String, MutableList<pelicula>>()
     dummyPeliculas.forEach { pelicula ->
