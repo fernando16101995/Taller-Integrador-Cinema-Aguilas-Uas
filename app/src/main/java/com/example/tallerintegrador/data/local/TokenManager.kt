@@ -2,12 +2,14 @@ package com.example.tallerintegrador.data.local
 
 import android.content.Context
 import androidx.core.content.edit
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-/**
- * Gestor de tokens y sesión de usuario
- * Guarda el token de acceso y la información del usuario en SharedPreferences
- */
-class TokenManager(context: Context) {
+@Singleton
+class TokenManager @Inject constructor(
+    @ApplicationContext context: Context
+) {
 
     private val prefs = context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
 
@@ -18,7 +20,6 @@ class TokenManager(context: Context) {
         private const val USER_EMAIL_KEY = "user_email"
     }
 
-    // Guardar token y datos de usuario
     fun saveAuthData(token: String, userId: Int, userName: String, userEmail: String) {
         prefs.edit {
             putString(TOKEN_KEY, token)
@@ -28,25 +29,17 @@ class TokenManager(context: Context) {
         }
     }
 
-    // Obtener token
     fun getToken(): String? = prefs.getString(TOKEN_KEY, null)
 
-    // Obtener ID de usuario
     fun getUserId(): Int = prefs.getInt(USER_ID_KEY, -1)
 
-    // Obtener nombre de usuario
     fun getUserName(): String? = prefs.getString(USER_NAME_KEY, null)
 
-    // Obtener email de usuario
     fun getUserEmail(): String? = prefs.getString(USER_EMAIL_KEY, null)
 
-    // Verificar si hay sesión activa
     fun isLoggedIn(): Boolean = getToken() != null
 
-    // Limpiar sesión (logout)
     fun clearSession() {
-        prefs.edit {
-            clear()
-        }
+        prefs.edit { clear() }
     }
 }

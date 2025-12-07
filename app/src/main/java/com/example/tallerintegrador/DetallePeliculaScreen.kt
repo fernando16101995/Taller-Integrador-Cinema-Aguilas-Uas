@@ -31,10 +31,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 
 /**
- * ✅ ACTUALIZADO: Ahora recibe FavoritosViewModel como parámetro
+ * recibe FavoritosViewModel como parámetro
  * Ya no crea una nueva instancia internamente
  */
-// ✅ CAMBIOS CLAVE EN DetallePeliculaScreen.kt
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,7 +47,7 @@ fun DetallePeliculaScreen(
     val context = LocalContext.current
     val peliculaDetailState by viewModel.peliculaDetail.collectAsState()
 
-    // ✅ CAMBIO: Usa Flow reactivo en lugar de suspend function
+    // Usa Flow reactivo en lugar de suspend function
     val isFavorite by favoritosViewModel.esFavoritoFlow(peliculaId)
         .collectAsState(initial = false)
 
@@ -240,7 +240,7 @@ fun DetallePeliculaScreen(
                                 .padding(16.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            // ✅ CAMBIO: El botón se actualiza automáticamente con el Flow
+                            // El botón se actualiza automáticamente con el Flow
                             IconButton(
                                 onClick = {
                                     favoritosViewModel.toggleFavorito(pelicula.id, isFavorite)

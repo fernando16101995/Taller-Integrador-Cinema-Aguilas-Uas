@@ -4,22 +4,26 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.LaunchedEffect
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.example.tallerintegrador.auth.AuthViewModel
-import com.example.tallerintegrador.core.ViewModelFactory
+import com.example.tallerintegrador.feature.admin.AdminViewModel
 import com.example.tallerintegrador.feature.peliculas.PeliculaViewModel
 import com.example.tallerintegrador.feature.favoritos.FavoritosViewModel
 import com.example.tallerintegrador.ui.theme.TallerIntegradorTheme
+import dagger.hilt.android.AndroidEntryPoint
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            // El tema ahora es reactivo y se actualiza automáticamente
             TallerIntegradorTheme {
                 MainNavigation()
             }
@@ -27,29 +31,18 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-/**
- * ✅ NAVEGACIÓN ACTUALIZADA con ruta de películas por género
- */
 @Composable
 fun MainNavigation() {
     val navController = rememberNavController()
 
-    // ViewModelFactory única para todos los ViewModels
-    val viewModelFactory = ViewModelFactory(
-        navController.context.applicationContext as android.app.Application
-    )
-
-    // ViewModels compartidos
-    val authViewModel: AuthViewModel = viewModel()
-    val peliculaViewModel: PeliculaViewModel = viewModel(factory = viewModelFactory)
-    val favoritosViewModel: FavoritosViewModel = viewModel(factory = viewModelFactory)
-
     NavHost(navController, startDestination = "welcome") {
+
         composable("welcome") {
             WelcomeScreen(navController)
         }
 
         composable("login") {
+            val authViewModel: AuthViewModel = hiltViewModel()
             LoginScreen(
                 navController = navController,
                 authViewModel = authViewModel
@@ -57,6 +50,7 @@ fun MainNavigation() {
         }
 
         composable("register") {
+            val authViewModel: AuthViewModel = hiltViewModel()
             RegisterScreen(
                 navController = navController,
                 authViewModel = authViewModel
@@ -64,6 +58,10 @@ fun MainNavigation() {
         }
 
         composable("home") {
+            val authViewModel: AuthViewModel = hiltViewModel()
+            val peliculaViewModel: PeliculaViewModel = hiltViewModel()
+            val favoritosViewModel: FavoritosViewModel = hiltViewModel()
+
             HomeScreen(
                 viewModel = peliculaViewModel,
                 navController = navController,
@@ -72,7 +70,6 @@ fun MainNavigation() {
             )
         }
 
-        // Ruta para detalles de película
         composable(
             route = "detalle_pelicula/{peliculaId}",
             arguments = listOf(
@@ -82,6 +79,8 @@ fun MainNavigation() {
             )
         ) { backStackEntry ->
             val peliculaId = backStackEntry.arguments?.getInt("peliculaId") ?: 0
+            val peliculaViewModel: PeliculaViewModel = hiltViewModel()
+            val favoritosViewModel: FavoritosViewModel = hiltViewModel()
 
             DetallePeliculaScreen(
                 peliculaId = peliculaId,
@@ -91,7 +90,6 @@ fun MainNavigation() {
             )
         }
 
-        // ✅ NUEVA RUTA: Películas por género
         composable(
             route = "peliculas_por_genero/{genero}",
             arguments = listOf(
@@ -101,14 +99,124 @@ fun MainNavigation() {
             )
         ) { backStackEntry ->
             val generoEncoded = backStackEntry.arguments?.getString("genero") ?: ""
-            // Decodificar el género (por si tiene caracteres especiales como "Ciencia Ficción")
             val genero = URLDecoder.decode(generoEncoded, StandardCharsets.UTF_8.toString())
+
+            val peliculaViewModel: PeliculaViewModel = hiltViewModel()
+            val favoritosViewModel: FavoritosViewModel = hiltViewModel()
 
             PeliculasPorGeneroScreen(
                 genero = genero,
                 peliculaViewModel = peliculaViewModel,
                 favoritosViewModel = favoritosViewModel,
                 navController = navController
+            )
+        }
+
+        composable("configuracion") {
+            val peliculaViewModel: PeliculaViewModel = hiltViewModel()
+            val favoritosViewModel: FavoritosViewModel = hiltViewModel()
+
+            ConfiguracionScreen(
+                navController = navController,
+                peliculaViewModel = peliculaViewModel,
+                favoritosViewModel = favoritosViewModel
+            )
+        }
+
+        composable("editar_perfil") {
+            val authViewModel: AuthViewModel = hiltViewModel()
+            EditarPerfilScreen(
+                navController = navController,
+                authViewModel = authViewModel
+            )
+        }
+
+        composable("notificaciones") {
+            NotificacionesScreen(navController = navController)
+        }
+
+        composable("privacidad") {
+            val authViewModel: AuthViewModel = hiltViewModel()
+            PrivacidadScreen(
+                navController = navController,
+                authViewModel = authViewModel
+            )
+        }
+
+        composable("acerca_de") {
+            AcercaDeScreen(navController = navController)
+        }
+
+        composable("admin/dashboard") {
+            val authViewModel: AuthViewModel = hiltViewModel()
+            val adminViewModel: AdminViewModel = hiltViewModel()
+
+            AdminDashboardScreen(
+                navController = navController,
+                adminViewModel = adminViewModel
+            )
+        }
+
+        composable("admin/usuarios") {
+            val adminViewModel: AdminViewModel = hiltViewModel()
+
+            AdminUsuariosScreen(
+                navController = navController,
+                adminViewModel = adminViewModel
+            )
+        }
+
+        composable("admin/peliculas") {
+            val adminViewModel: AdminViewModel = hiltViewModel()
+
+            AdminPeliculasScreen(
+                navController = navController,
+                adminViewModel = adminViewModel
+            )
+        }
+
+        composable("admin/logs") {
+            val adminViewModel: AdminViewModel = hiltViewModel()
+
+            AdminLogsScreen(
+                navController = navController,
+                adminViewModel = adminViewModel
+            )
+        }
+
+        composable("admin/peliculas/nueva") {
+            val adminViewModel: AdminViewModel = hiltViewModel()
+
+            LaunchedEffect(Unit) {
+                adminViewModel.cargarPeliculas()
+            }
+
+            AdminPeliculaFormScreen(
+                navController = navController,
+                peliculaId = null,
+                adminViewModel = adminViewModel
+            )
+        }
+
+        composable(
+            route = "admin/peliculas/editar/{peliculaId}",
+            arguments = listOf(
+                navArgument("peliculaId") {
+                    type = NavType.IntType
+                }
+            )
+        ) { backStackEntry ->
+            val peliculaId = backStackEntry.arguments?.getInt("peliculaId") ?: return@composable
+            val adminViewModel: AdminViewModel = hiltViewModel()
+
+            LaunchedEffect(Unit) {
+                adminViewModel.cargarPeliculas()
+            }
+
+            AdminPeliculaFormScreen(
+                navController = navController,
+                peliculaId = peliculaId,
+                adminViewModel = adminViewModel
             )
         }
     }
