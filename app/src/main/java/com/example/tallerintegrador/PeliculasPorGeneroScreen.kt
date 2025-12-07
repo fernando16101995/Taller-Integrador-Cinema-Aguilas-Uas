@@ -23,7 +23,7 @@ import com.example.tallerintegrador.ui.theme.DarkBlue
 import com.example.tallerintegrador.ui.theme.Yellow
 
 /**
- * ✅ NUEVA PANTALLA: Muestra películas filtradas por género
+ * Muestra películas filtradas por género
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

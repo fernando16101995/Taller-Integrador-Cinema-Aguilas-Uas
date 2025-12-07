@@ -1,21 +1,24 @@
 package com.example.tallerintegrador.auth
 
-import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tallerintegrador.auth.state.AuthState
 import com.example.tallerintegrador.data.local.TokenManager
 import com.example.tallerintegrador.data.model.*
-import com.example.tallerintegrador.data.network.RetrofitClient
+import com.example.tallerintegrador.data.network.ApiService
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class AuthViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class AuthViewModel @Inject constructor(
+    private val apiService: ApiService,
+    private val tokenManager: TokenManager
+) : ViewModel() {
+
     val authState = mutableStateOf<AuthState>(AuthState.Idle)
-
-    //  Gestor de tokens
-    private val tokenManager = TokenManager(application.applicationContext)
 
     init {
         // Verificar si hay sesión activa al iniciar
@@ -38,9 +41,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             authState.value = AuthState.Loading
             try {
-                val response = RetrofitClient.instance.login(loginRequest)
+                val response = apiService.login(loginRequest)
 
-                //  GUARDAR TOKEN Y DATOS DE USUARIO
                 tokenManager.saveAuthData(
                     token = response.accessToken,
                     userId = response.user.id,
@@ -61,9 +63,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             authState.value = AuthState.Loading
             try {
-                val response = RetrofitClient.instance.register(registerRequest)
+                val response = apiService.register(registerRequest)
 
-                //  GUARDAR TOKEN Y DATOS DE USUARIO
                 tokenManager.saveAuthData(
                     token = response.accessToken,
                     userId = response.user.id,
@@ -80,13 +81,11 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Función para cerrar sesión
     fun logout() {
         tokenManager.clearSession()
         authState.value = AuthState.Idle
         Log.d("AuthViewModel", "Sesión cerrada")
     }
 
-    // Obtener token actual
     fun getToken(): String? = tokenManager.getToken()
 }

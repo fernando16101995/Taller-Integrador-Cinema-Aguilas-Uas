@@ -31,7 +31,7 @@ data class Categoria(
 )
 
 /**
- * ✅ ACTUALIZADO: Ahora recibe NavController para navegación
+ * ACTUALIZADO: Ahora recibe NavController para navegación
  */
 @Composable
 fun CategoriasScreen(navController: NavController? = null) {
@@ -44,7 +44,7 @@ fun CategoriasScreen(navController: NavController? = null) {
         Categoria("Romance", Icons.Filled.FavoriteBorder, Color(0xFFF48FB1)),
         Categoria("Thriller", Icons.Filled.Lock, Color(0xFF607D8B)),
         Categoria("Animación", Icons.Filled.Star, Color(0xFF4CAF50)),
-        Categoria("Aventura", Icons.Filled.Place, Color(0xFF00BCD4)),
+        Categoria("Aventuras", Icons.Filled.Place, Color(0xFF00BCD4)),
         Categoria("Fantasía", Icons.Filled.Info, Color(0xFF673AB7)),
         Categoria("Documental", Icons.Filled.DateRange, Color(0xFF795548)),
         Categoria("Crimen", Icons.Filled.Build, Color(0xFF424242))
@@ -73,7 +73,7 @@ fun CategoriasScreen(navController: NavController? = null) {
                 CategoriaCard(
                     categoria = categoria,
                     onClick = {
-                        // ✅ NUEVO: Navega a la pantalla de películas por género
+                        // Navega a la pantalla de películas por género
                         navController?.navigate("peliculas_por_genero/${categoria.nombre}")
                     }
                 )
@@ -83,7 +83,7 @@ fun CategoriasScreen(navController: NavController? = null) {
 }
 
 /**
- * ✅ ACTUALIZADO: Ahora recibe onClick como parámetro
+ * recibe onClick como parámetro
  */
 @Composable
 fun CategoriaCard(categoria: Categoria, onClick: () -> Unit) {
@@ -91,7 +91,7 @@ fun CategoriaCard(categoria: Categoria, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .height(120.dp)
-            .clickable { onClick() }, // ✅ NUEVO: Click funcional
+            .clickable { onClick() }, // Navega a la pantalla de películas por género al hacer clic
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = categoria.color.copy(alpha = 0.2f)

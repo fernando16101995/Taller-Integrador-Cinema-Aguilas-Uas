@@ -28,8 +28,6 @@ import com.example.tallerintegrador.ui.theme.DarkBlue
 import com.example.tallerintegrador.ui.theme.Yellow
 import com.example.tallerintegrador.feature.peliculas.PeliculaViewModel
 
-// ✅ CAMBIOS CLAVE EN FavoritosScreen.kt
-
 @Composable
 fun FavoritosScreen(
     peliculaViewModel: PeliculaViewModel?,
@@ -40,7 +38,7 @@ fun FavoritosScreen(
     val isLoading by favoritosViewModel.isLoading.collectAsState()
     val error by favoritosViewModel.error.collectAsState()
 
-    // ✅ CAMBIO: Solo carga si la lista está vacía
+    // Solo carga si la lista está vacía
     LaunchedEffect(Unit) {
         if (favoritos.isEmpty()) {
             favoritosViewModel.cargarFavoritos()
@@ -54,7 +52,7 @@ fun FavoritosScreen(
     ) {
         when {
             isLoading && favoritos.isEmpty() -> {
-                // ✅ NUEVO: Indicador de carga
+                // Indicador de carga
                 Column(
                     modifier = Modifier.align(Alignment.Center),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -70,7 +68,7 @@ fun FavoritosScreen(
             }
 
             error != null -> {
-                // ✅ NUEVO: Manejo de errores
+                // Manejo de errores
                 Column(
                     modifier = Modifier
                         .align(Alignment.Center)

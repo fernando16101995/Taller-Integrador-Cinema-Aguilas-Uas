@@ -1,29 +1,20 @@
 package com.example.tallerintegrador.feature.favoritos
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tallerintegrador.data.local.TokenManager
 import com.example.tallerintegrador.data.model.pelicula
 import com.example.tallerintegrador.data.repository.FavoritosRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-/**
- * ✅ ViewModel con cache reactivo
- *
- * - Ya no hace requests innecesarias
- * - Usa Flows para actualización automática
- * - Cache optimista para mejor UX
- */
-class FavoritosViewModel(
-    application: Application,
-    private val repository: FavoritosRepository
-) : AndroidViewModel(application) {
-
-    private val tokenManager = TokenManager(application.applicationContext)
-
-    // ========== ESTADO DE PELÍCULAS FAVORITAS ==========
+@HiltViewModel
+class FavoritosViewModel @Inject constructor(
+    private val repository: FavoritosRepository,
+    private val tokenManager: TokenManager
+) : ViewModel() {
 
     private val _favoritos = MutableStateFlow<List<pelicula>>(emptyList())
     val favoritos: StateFlow<List<pelicula>> = _favoritos.asStateFlow()
@@ -34,12 +25,7 @@ class FavoritosViewModel(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
-    // ========== FLOW REACTIVO DE IDS DE FAVORITOS ==========
-
-    /**
-     * ✅ Flow que se actualiza automáticamente cuando cambian los favoritos
-     * Útil para marcar películas como favoritas en HomeScreen sin requests
-     */
+    // Flow reactivo de IDs (ya lo tienes)
     val favoritosIds: StateFlow<Set<Int>> = repository.getFavoritosIdsFlow()
         .stateIn(
             scope = viewModelScope,
@@ -47,34 +33,43 @@ class FavoritosViewModel(
             initialValue = emptySet()
         )
 
-    // ========== FUNCIONES PÚBLICAS ==========
-
-    /**
-     * ✅ Carga favoritos SOLO cuando sea necesario
-     * Ya no se llama automáticamente cada vez
-     */
-    fun cargarFavoritos() {
-        val token = getTokenOrNull() ?: return
-
+    // Auto-recargar cuando cambian los IDs
+    init {
         viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-
-            try {
-                val peliculas = repository.getFavoritos(token)
-                _favoritos.value = peliculas
-            } catch (e: Exception) {
-                _error.value = "Error al cargar favoritos: ${e.message}"
-            } finally {
-                _isLoading.value = false
+            favoritosIds.collect { ids ->
+                // Cuando cambian los IDs, recarga la lista completa
+                if (ids.isNotEmpty()) {
+                    cargarFavoritosInternamente()
+                }
             }
         }
     }
 
-    /**
-     * ✅ Toggle con cache optimista
-     * La UI se actualiza inmediatamente sin esperar al servidor
-     */
+    fun cargarFavoritos() {
+        val token = getTokenOrNull() ?: return
+
+        viewModelScope.launch {
+            cargarFavoritosInternamente()
+        }
+    }
+
+    // Método interno privado
+    private suspend fun cargarFavoritosInternamente() {
+        val token = getTokenOrNull() ?: return
+
+        _isLoading.value = true
+        _error.value = null
+
+        try {
+            val peliculas = repository.getFavoritos(token)
+            _favoritos.value = peliculas
+        } catch (e: Exception) {
+            _error.value = "Error al cargar favoritos: ${e.message}"
+        } finally {
+            _isLoading.value = false
+        }
+    }
+
     fun toggleFavorito(peliculaId: Int, currentlyFavorite: Boolean) {
         val token = getTokenOrNull() ?: return
 
@@ -85,42 +80,26 @@ class FavoritosViewModel(
                 } else {
                     repository.addFavorito(token, peliculaId)
                 }
-
-                // Actualiza la lista de películas favoritas
-                _favoritos.value = repository.getFavoritos(token)
-
             } catch (e: Exception) {
                 _error.value = "Error al actualizar favorito: ${e.message}"
             }
         }
     }
 
-    /**
-     * ✅ Verifica si es favorito desde CACHE (sin red)
-     */
     suspend fun esFavorito(peliculaId: Int): Boolean {
         return repository.isFavorito(peliculaId)
     }
 
-    /**
-     * ✅ Flow reactivo para observar estado de favorito
-     * La UI se actualiza automáticamente cuando cambia
-     */
     fun esFavoritoFlow(peliculaId: Int): Flow<Boolean> {
         return repository.isFavoritoFlow(peliculaId)
     }
 
-    /**
-     * ✅ Limpia cache al cerrar sesión
-     */
     fun clearCache() {
         viewModelScope.launch {
             repository.clearCache()
             _favoritos.value = emptyList()
         }
     }
-
-    // ========== HELPER ==========
 
     private fun getTokenOrNull(): String? = tokenManager.getToken()
 }

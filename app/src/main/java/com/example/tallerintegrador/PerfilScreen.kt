@@ -20,32 +20,53 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.tallerintegrador.auth.AuthViewModel
+import com.example.tallerintegrador.feature.admin.AdminViewModel
 import com.example.tallerintegrador.data.local.TokenManager
+import com.example.tallerintegrador.feature.favoritos.FavoritosViewModel
 import com.example.tallerintegrador.ui.theme.DarkBlue
 import com.example.tallerintegrador.ui.theme.Yellow
 
+/**
+ *  PERFIL FUNCIONAL
+ * - Carga datos reales del usuario
+ * - Muestra estadísticas dinámicas
+ * - Gestiona cierre de sesión correctamente
+ */
 @Composable
 fun PerfilScreen(
     navController: NavController?,
-    authViewModel: AuthViewModel = viewModel() // ⭐ Añadimos AuthViewModel
+    authViewModel: AuthViewModel,
+    favoritosViewModel: FavoritosViewModel,
+    adminViewModel: AdminViewModel = hiltViewModel()
 ) {
+    val isAdmin by adminViewModel.isAdmin.collectAsState()
     var showLogoutDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context.applicationContext) }
 
-    // ⭐ Obtener información del usuario desde TokenManager
-    val userName = tokenManager.getUserName() ?: "Usuario Demo"
-    val userEmail = tokenManager.getUserEmail() ?: "usuario@demo.com"
+    // Obtener información del usuario
+    val userName = tokenManager.getUserName() ?: "Usuario"
+    val userEmail = tokenManager.getUserEmail() ?: "usuario@ejemplo.com"
+    val userId = tokenManager.getUserId()
+
+    // Estadísticas reactivas
+    val favoritos by favoritosViewModel.favoritos.collectAsState()
+    val totalFavoritos = favoritos.size
+
+    // Cargar favoritos al entrar
+    LaunchedEffect(Unit) {
+        favoritosViewModel.cargarFavoritos()
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBlue)
     ) {
-        // Header del perfil
+        // ===== HEADER DEL PERFIL =====
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -71,7 +92,7 @@ fun PerfilScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ⭐ Mostrar nombre real del usuario
+            // Nombre del usuario
             Text(
                 text = userName,
                 color = Yellow,
@@ -79,7 +100,7 @@ fun PerfilScreen(
                 fontWeight = FontWeight.Bold
             )
 
-            // ⭐ Mostrar email real del usuario
+            // Email del usuario
             Text(
                 text = userEmail,
                 color = Color.White.copy(alpha = 0.7f),
@@ -88,41 +109,142 @@ fun PerfilScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Estadísticas
+            // ESTADÍSTICAS DINÁMICAS
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                StatItem(label = "Vistas", value = "42")
+                StatItem(label = "Usuario ID", value = userId.toString())
+
                 VerticalDivider(
                     modifier = Modifier
                         .width(1.dp)
                         .height(40.dp),
                     color = Color.White.copy(alpha = 0.3f)
                 )
-                StatItem(label = "Favoritas", value = "3")
+
+                StatItem(label = "Favoritas", value = totalFavoritos.toString())
+
                 VerticalDivider(
                     modifier = Modifier
                         .width(1.dp)
                         .height(40.dp),
                     color = Color.White.copy(alpha = 0.3f)
                 )
-                StatItem(label = "Listas", value = "5")
+
+                StatItem(label = "Listas", value = "1")
             }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Opciones del perfil
+        // ===== OPCIONES DEL PERFIL =====
         LazyColumn(
             modifier = Modifier.fillMaxSize()
         ) {
+            // ===== PANEL DE ADMINISTRACIÓN =====
+            if (isAdmin) {
+                item {
+                    SectionHeader("Administración")
+                }
+
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Yellow.copy(alpha = 0.15f)
+                        ),
+                        elevation = CardDefaults.cardElevation(
+                            defaultElevation = 4.dp
+                        ),
+                        onClick = { navController?.navigate("admin/dashboard") }
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .background(Yellow.copy(alpha = 0.3f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Shield,
+                                    contentDescription = "Admin",
+                                    tint = Yellow,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "Panel de Administración",
+                                        color = Yellow,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Surface(
+                                        color = Color.Red,
+                                        shape = RoundedCornerShape(4.dp)
+                                    ) {
+                                        Text(
+                                            "ADMIN",
+                                            color = Color.White,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Gestionar usuarios, películas y más",
+                                    color = Color.White.copy(alpha = 0.7f),
+                                    fontSize = 13.sp
+                                )
+                            }
+
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = "Ir",
+                                tint = Yellow
+                            )
+                        }
+                    }
+                }
+            }
+            // ===== FIN PANEL DE ADMINISTRACIÓN =====
             item {
                 ProfileOption(
                     icon = Icons.Filled.Person,
                     title = "Editar Perfil",
                     subtitle = "Actualiza tu información personal",
-                    onClick = { /* TODO: Editar perfil */ }
+                    onClick = {
+                        navController?.navigate("editar_perfil")
+                    }
+                )
+            }
+
+            item {
+                ProfileOption(
+                    icon = Icons.Filled.Favorite,
+                    title = "Mis Favoritas",
+                    subtitle = "$totalFavoritos películas guardadas",
+                    onClick = {
+                        navController?.navigate("home")
+                        // Cambiar a tab de favoritos (necesitarías pasar el tab como argumento)
+                    }
                 )
             }
 
@@ -131,7 +253,9 @@ fun PerfilScreen(
                     icon = Icons.Filled.Notifications,
                     title = "Notificaciones",
                     subtitle = "Configura tus preferencias",
-                    onClick = { /* TODO: Notificaciones */ }
+                    onClick = {
+                        navController?.navigate("notificaciones")
+                    }
                 )
             }
 
@@ -140,7 +264,9 @@ fun PerfilScreen(
                     icon = Icons.Filled.Lock,
                     title = "Privacidad y Seguridad",
                     subtitle = "Gestiona tu cuenta",
-                    onClick = { /* TODO: Privacidad */ }
+                    onClick = {
+                        navController?.navigate("privacidad")
+                    }
                 )
             }
 
@@ -149,7 +275,9 @@ fun PerfilScreen(
                     icon = Icons.Filled.Settings,
                     title = "Configuración",
                     subtitle = "Ajustes de la aplicación",
-                    onClick = { /* TODO: Configuración */ }
+                    onClick = {
+                        navController?.navigate("configuracion")
+                    }
                 )
             }
 
@@ -158,12 +286,13 @@ fun PerfilScreen(
                     icon = Icons.Filled.Info,
                     title = "Acerca de",
                     subtitle = "Versión 1.0.0",
-                    onClick = { /* TODO: Acerca de */ }
+                    onClick = {
+                        navController?.navigate("acerca_de")
+                    }
                 )
             }
 
             item {
-                // ⭐ Opción de cerrar sesión
                 ProfileOption(
                     icon = Icons.AutoMirrored.Filled.ExitToApp,
                     title = "Cerrar Sesión",
@@ -179,7 +308,7 @@ fun PerfilScreen(
         }
     }
 
-    // ⭐ Diálogo de confirmación de cierre de sesión
+    // ===== DIÁLOGO DE CONFIRMACIÓN =====
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
@@ -191,24 +320,35 @@ fun PerfilScreen(
                 )
             },
             text = {
-                Text(
-                    text = "¿Estás seguro que deseas cerrar sesión?",
-                    color = Color.White
-                )
+                Column {
+                    Text(
+                        text = "¿Estás seguro que deseas cerrar sesión?",
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Tendrás que iniciar sesión nuevamente para acceder a tus favoritos.",
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 14.sp
+                    )
+                }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
                         showLogoutDialog = false
-                        // ⭐ CERRAR SESIÓN
+
+                        // CERRAR SESIÓN COMPLETO
                         authViewModel.logout()
-                        // ⭐ Navegar a WelcomeScreen y limpiar el stack
+                        favoritosViewModel.clearCache()
+
+                        // Navegar y limpiar stack
                         navController?.navigate("welcome") {
                             popUpTo(0) { inclusive = true }
                         }
                     }
                 ) {
-                    Text("Cerrar Sesión", color = Color.Red)
+                    Text("Cerrar Sesión", color = Color.Red, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -222,6 +362,9 @@ fun PerfilScreen(
     }
 }
 
+/**
+ * Componente de estadística
+ */
 @Composable
 fun StatItem(label: String, value: String) {
     Column(
@@ -241,6 +384,9 @@ fun StatItem(label: String, value: String) {
     }
 }
 
+/**
+ * Componente de opción del perfil
+ */
 @Composable
 fun ProfileOption(
     icon: ImageVector,
@@ -268,11 +414,17 @@ fun ProfileOption(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Ícono
             Box(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(if (isDestructive) Color.Red.copy(alpha = 0.2f) else Yellow.copy(alpha = 0.2f)),
+                    .background(
+                        if (isDestructive)
+                            Color.Red.copy(alpha = 0.2f)
+                        else
+                            Yellow.copy(alpha = 0.2f)
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -285,6 +437,7 @@ fun ProfileOption(
 
             Spacer(modifier = Modifier.width(16.dp))
 
+            // Texto
             Column(
                 modifier = Modifier.weight(1f)
             ) {
@@ -302,6 +455,7 @@ fun ProfileOption(
                 )
             }
 
+            // Flecha
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = "Ir",

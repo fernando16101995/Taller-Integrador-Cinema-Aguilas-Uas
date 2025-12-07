@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.tallerintegrador.data.model.pelicula
@@ -28,11 +29,7 @@ import com.example.tallerintegrador.ui.theme.DarkBlue
 import com.example.tallerintegrador.ui.theme.Yellow
 import com.example.tallerintegrador.feature.favoritos.FavoritosViewModel
 import com.example.tallerintegrador.auth.AuthViewModel
-
-/**
- * ✅ ACTUALIZADO: Ahora recibe FavoritosViewModel como parámetro
- */
-// ✅ CAMBIOS CLAVE EN HomeScreen.kt
+import com.example.tallerintegrador.feature.admin.AdminViewModel
 
 @Composable
 fun HomeScreen(
@@ -43,17 +40,15 @@ fun HomeScreen(
 ) {
     val peliculas by viewModel.peliculas.collectAsState()
     val isLoading by viewModel.isLoadingList.collectAsState()
-    val favoritosIds by favoritosViewModel.favoritosIds.collectAsState() // ✅ NUEVO
+    val favoritosIds by favoritosViewModel.favoritosIds.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
 
-    // ✅ Carga películas SOLO si no hay datos
     LaunchedEffect(Unit) {
         if (peliculas.isEmpty()) {
             viewModel.getPeliculas()
         }
     }
 
-    // ✅ Sincroniza favoritos SOLO al entrar por primera vez
     LaunchedEffect(Unit) {
         if (favoritosIds.isEmpty()) {
             favoritosViewModel.cargarFavoritos()
@@ -63,9 +58,11 @@ fun HomeScreen(
     val peliculasPorGenero = remember(peliculas) {
         val map = mutableMapOf<String, MutableList<pelicula>>()
         peliculas.forEach { pelicula ->
-            pelicula.genre.split(',').forEach { genero ->
+            (pelicula.genre ?: "").split(',').forEach { genero ->
                 val trimmedGenero = genero.trim()
-                map.getOrPut(trimmedGenero) { mutableListOf() }.add(pelicula)
+                if (trimmedGenero.isNotEmpty()) {
+                    map.getOrPut(trimmedGenero) { mutableListOf() }.add(pelicula)
+                }
             }
         }
         map
@@ -80,12 +77,9 @@ fun HomeScreen(
         authViewModel = authViewModel,
         favoritosViewModel = favoritosViewModel,
         isLoading = isLoading,
-        favoritosIds = favoritosIds // ✅ NUEVO: Pasa los IDs para marcar favoritos
+        favoritosIds = favoritosIds
     )
 }
-
-// ✅ FRAGMENTO ACTUALIZADO de HomeScreen.kt
-// Solo muestra la sección que cambia (el switch del selectedTab)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -138,7 +132,6 @@ fun HomeScreenContent(
     ) { padding ->
         when (selectedTab) {
             0 -> {
-                // Pantalla de Inicio con indicador de carga
                 if (isLoading && peliculasPorGenero.isEmpty()) {
                     Box(
                         modifier = Modifier
@@ -181,7 +174,6 @@ fun HomeScreenContent(
                 }
             }
             1 -> {
-                // ✅ ACTUALIZADO: Ahora pasa navController a CategoriasScreen
                 Box(modifier = Modifier.padding(padding)) {
                     CategoriasScreen(navController = navController)
                 }
@@ -209,8 +201,16 @@ fun HomeScreenContent(
             }
             4 -> {
                 Box(modifier = Modifier.padding(padding)) {
-                    authViewModel?.let {
-                        PerfilScreen(navController, it)
+                    authViewModel?.let { auth ->
+                        favoritosViewModel?.let { favs ->
+                            val adminViewModel: AdminViewModel = hiltViewModel()
+                            PerfilScreen(
+                                navController = navController,
+                                authViewModel = auth,
+                                favoritosViewModel = favs,
+                                adminViewModel = adminViewModel
+                            )
+                        }
                     }
                 }
             }
@@ -294,11 +294,11 @@ fun BottomNavigationBar(
         )
     }
 }
-// ✅ MovieCard actualizada con indicador de favorito
+
 @Composable
 fun MovieCard(
     pelicula: pelicula,
-    isFavorite: Boolean = false, // ✅ NUEVO
+    isFavorite: Boolean = false,
     onClick: () -> Unit = {}
 ) {
     Box(modifier = Modifier.width(150.dp)) {
@@ -308,7 +308,7 @@ fun MovieCard(
         ) {
             AsyncImage(
                 model = pelicula.posterUrl,
-                contentDescription = pelicula.title,
+                contentDescription = pelicula.title ?: "",
                 modifier = Modifier
                     .width(150.dp)
                     .height(225.dp)
@@ -317,8 +317,9 @@ fun MovieCard(
             )
 
             Spacer(modifier = Modifier.height(8.dp))
+            
             Text(
-                text = pelicula.title,
+                text = pelicula.title ?: "",
                 color = Color.White,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
@@ -327,7 +328,6 @@ fun MovieCard(
             )
         }
 
-        // ✅ NUEVO: Indicador de favorito
         if (isFavorite) {
             Icon(
                 imageVector = Icons.Filled.Favorite,
