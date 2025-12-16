@@ -20,9 +20,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-// Paleta para el tema oscuro
+// Paleta para el tema oscuro (original)
 private val DarkColorScheme = darkColorScheme(
-    primary = Yellow,
+    primary = Yellow, // Amarillo brillante para modo oscuro
     background = DarkBlue,
     surface = DarkBlue,
     onPrimary = DarkBlue,
@@ -34,18 +34,23 @@ private val DarkColorScheme = darkColorScheme(
     onSurfaceVariant = White.copy(alpha = 0.8f)
 )
 
-// Paleta para el tema claro
+// Paleta para el tema claro (MEJORADA CON MEJOR CONTRASTE)
 private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFFFFE600), // Yellow como primary
+    primary = Color(0xFF0D47A1), // Azul oscuro intenso (excelente contraste)
     background = Color(0xFFF5F5F5), // Fondo gris muy claro
     surface = Color.White,
-    onPrimary = Color(0xFF10153B), // DarkBlue sobre amarillo
-    onBackground = Color(0xFF10153B), // DarkBlue sobre fondo claro
-    onSurface = Color(0xFF10153B), // DarkBlue sobre surface
-    secondary = Color(0xFF10153B), // DarkBlue como secondary
-    tertiary = Color(0xFF10153B).copy(alpha = 0.7f),
-    surfaceVariant = Color(0xFFE8E8E8),
-    onSurfaceVariant = Color(0xFF10153B).copy(alpha = 0.8f)
+    onPrimary = Color.White, // Texto blanco sobre azul oscuro
+    onBackground = Color(0xFF1C1B1F), // Texto muy oscuro sobre fondo claro
+    onSurface = Color(0xFF1C1B1F), // Texto muy oscuro sobre surface
+    secondary = Color(0xFF1565C0), // Azul medio
+    tertiary = Color(0xFF0D47A1).copy(alpha = 0.7f),
+    surfaceVariant = Color(0xFFE8EAF6), // Azul muy claro para cards
+    onSurfaceVariant = Color(0xFF1C1B1F).copy(alpha = 0.8f),
+    // Colores adicionales para mejor contraste
+    primaryContainer = Color(0xFF1976D2).copy(alpha = 0.15f),
+    onPrimaryContainer = Color(0xFF0D47A1),
+    secondaryContainer = Color(0xFFBBDEFB),
+    onSecondaryContainer = Color(0xFF0D47A1)
 )
 
 @Composable
