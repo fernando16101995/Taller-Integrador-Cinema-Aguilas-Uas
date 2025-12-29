@@ -20,28 +20,13 @@ class AuthViewModel @Inject constructor(
 
     val authState = mutableStateOf<AuthState>(AuthState.Idle)
 
-    init {
-        // Verificar si hay sesión activa al iniciar
-        if (tokenManager.isLoggedIn()) {
-            authState.value = AuthState.Success(
-                LoginResponse(
-                    accessToken = tokenManager.getToken() ?: "",
-                    tokenType = "Bearer",
-                    user = User(
-                        id = tokenManager.getUserId(),
-                        name = tokenManager.getUserName() ?: "",
-                        email = tokenManager.getUserEmail() ?: ""
-                    )
-                )
-            )
-        }
-    }
+    /* ---------------- LOGIN ---------------- */
 
-    fun login(loginRequest: LoginRequest) {
+    fun login(request: LoginRequest) {
         viewModelScope.launch {
             authState.value = AuthState.Loading
             try {
-                val response = apiService.login(loginRequest)
+                val response = apiService.login(request)
 
                 tokenManager.saveAuthData(
                     token = response.accessToken,
@@ -50,20 +35,22 @@ class AuthViewModel @Inject constructor(
                     userEmail = response.user.email
                 )
 
-                authState.value = AuthState.Success(response)
-                Log.d("AuthViewModel", "Login exitoso - Token guardado")
+                authState.value = AuthState.AuthSuccess(response)
             } catch (e: Exception) {
-                Log.e("AuthViewModel", "Login failed", e)
-                authState.value = AuthState.Error("Error en el login: ${e.message}")
+                authState.value = AuthState.Error(
+                    e.message ?: "Error en el login"
+                )
             }
         }
     }
 
-    fun register(registerRequest: RegisterRequest) {
+    /* ---------------- REGISTER ---------------- */
+
+    fun register(request: RegisterRequest) {
         viewModelScope.launch {
             authState.value = AuthState.Loading
             try {
-                val response = apiService.register(registerRequest)
+                val response = apiService.register(request)
 
                 tokenManager.saveAuthData(
                     token = response.accessToken,
@@ -72,11 +59,103 @@ class AuthViewModel @Inject constructor(
                     userEmail = response.user.email
                 )
 
-                authState.value = AuthState.Success(response)
-                Log.d("AuthViewModel", "Registro exitoso - Token guardado")
+                authState.value = AuthState.AuthSuccess(response)
             } catch (e: Exception) {
-                Log.e("AuthViewModel", "Registration failed", e)
-                authState.value = AuthState.Error("El registro fue exitoso, pero no se pudo iniciar sesión automáticamente. Por favor, inicia sesión.")
+                authState.value = AuthState.Error(
+                    e.message ?: "Error en el registro"
+                )
+            }
+        }
+    }
+
+    /* ---------- RECUPERAR CONTRASEÑA ---------- */
+    fun enviarCodigo(email: String) {
+        viewModelScope.launch {
+            authState.value = AuthState.Loading
+            try {
+                val response = apiService.enviarCodigo(
+                    SolicitarCodigoRequest(email)
+                )
+
+                if (response.isSuccessful && response.body()?.success == true) {
+                    authState.value = AuthState.SuccessMessage(
+                        response.body()?.message ?: "Código enviado"
+                    )
+                    Log.d("AuthViewModel", "Código enviado a $email")
+                } else {
+                    authState.value = AuthState.Error(
+                        response.body()?.message ?: "Error al enviar el código"
+                    )
+                }
+
+            } catch (e: Exception) {
+                authState.value = AuthState.Error(
+                    e.message ?: "Error al enviar el código"
+                )
+            }
+        }
+    }
+
+    fun validarCodigo(email: String, code: String) {
+        viewModelScope.launch {
+            authState.value = AuthState.Loading
+            try {
+                val response = apiService.validarCodigo(
+                    ValidarCodigoRequest(email, code)
+                )
+
+                if (response.isSuccessful && response.body()?.success == true) {
+                    authState.value = AuthState.SuccessMessage(
+                        response.body()?.message ?: "Código validado"
+                    )
+                    Log.d("AuthViewModel", "Código validado")
+                } else {
+                    authState.value = AuthState.Error(
+                        response.body()?.message ?: "Código inválido"
+                    )
+                }
+
+            } catch (e: Exception) {
+                authState.value = AuthState.Error(
+                    e.message ?: "Código inválido"
+                )
+            }
+        }
+    }
+
+    fun restablecerContrasena(
+        email: String,
+        code: String,
+        password: String,
+        passwordConfirmation: String
+    ) {
+        viewModelScope.launch {
+            authState.value = AuthState.Loading
+            try {
+                val response = apiService.restablecerContrasena(
+                    RestablecerContrasenaRequest(
+                        email = email,
+                        code = code,
+                        password = password,
+                        password_confirmation = passwordConfirmation
+                    )
+                )
+
+                if (response.isSuccessful && response.body()?.success == true) {
+                    authState.value = AuthState.SuccessMessage(
+                        response.body()?.message ?: "Contraseña actualizada"
+                    )
+                    Log.d("AuthViewModel", "Contraseña restablecida")
+                } else {
+                    authState.value = AuthState.Error(
+                        response.body()?.message ?: "Error al cambiar contraseña"
+                    )
+                }
+
+            } catch (e: Exception) {
+                authState.value = AuthState.Error(
+                    e.message ?: "No se pudo cambiar la contraseña"
+                )
             }
         }
     }
@@ -84,8 +163,5 @@ class AuthViewModel @Inject constructor(
     fun logout() {
         tokenManager.clearSession()
         authState.value = AuthState.Idle
-        Log.d("AuthViewModel", "Sesión cerrada")
     }
-
-    fun getToken(): String? = tokenManager.getToken()
 }
