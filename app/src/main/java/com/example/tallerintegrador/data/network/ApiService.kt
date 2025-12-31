@@ -3,6 +3,7 @@ package com.example.tallerintegrador.data.network
 import com.example.tallerintegrador.data.model.*
 import com.example.tallerintegrador.feature.admin.LogActividad
 import com.example.tallerintegrador.feature.admin.Usuario
+import retrofit2.Response
 import retrofit2.http.*
 
 interface ApiService {
@@ -15,12 +16,28 @@ interface ApiService {
     @POST("api/register")
     suspend fun register(@Body request: RegisterRequest): LoginResponse
 
+    // ---------- RECUPERAR CONTRASEÑA ----------
+
+    @POST("api/password/send-code")
+    suspend fun enviarCodigo(
+        @Body request: SolicitarCodigoRequest
+    ): Response<CodeResponse>
+
+    @POST("api/password/validate-code")
+    suspend fun validarCodigo(
+        @Body request: ValidarCodigoRequest
+    ): Response<CodeResponse>
+
+    @POST("api/password/reset")
+    suspend fun restablecerContrasena(
+        @Body request: RestablecerContrasenaRequest
+    ): Response<CodeResponse>
+
     // ---------- PELÍCULAS ----------
 
     @GET("api/peliculas")
     suspend fun getPeliculas(): List<pelicula>
 
-    // Obtener una película específica por ID
     @GET("api/peliculas/{id}")
     suspend fun getPeliculaById(@Path("id") peliculaId: Int): pelicula
 
@@ -29,7 +46,7 @@ interface ApiService {
     @GET("api/favoritos")
     suspend fun getFavoritos(
         @Header("Authorization") authHeader: String
-    ): List<pelicula> // <--- espera una lista directa
+    ): List<pelicula>
 
     @POST("api/favoritos/{peliculaId}")
     suspend fun addFavorito(
@@ -49,7 +66,7 @@ interface ApiService {
         @Path("peliculaId") peliculaId: Int
     ): CheckFavoritoResponse
 
-    // ========== ADMIN ENDPOINTS ==========
+    // ---------- ADMIN ----------
 
     @GET("api/admin/dashboard")
     suspend fun getAdminDashboard(
@@ -102,4 +119,40 @@ interface ApiService {
     suspend fun getAdminLogs(
         @Header("Authorization") authHeader: String
     ): List<LogActividad>
+
+    // ---------- PERFILES ----------
+
+    @GET("api/profiles")
+    suspend fun getProfiles(@Header("Authorization") authHeader: String): ProfilesResponse
+
+    @GET("api/profiles/{id}")
+    suspend fun getProfile(
+        @Header("Authorization") authHeader: String,
+        @Path("id") id: String
+    ): ProfileActionResponse
+
+    @POST("api/profiles")
+    suspend fun createProfile(
+        @Header("Authorization") authHeader: String,
+        @Body request: CreateProfileRequest
+    ): ProfileActionResponse
+
+    @PUT("api/profiles/{id}")
+    suspend fun updateProfile(
+        @Header("Authorization") authHeader: String,
+        @Path("id") id: String,
+        @Body request: UpdateProfileRequest
+    ): ProfileActionResponse
+
+    @DELETE("api/profiles/{id}")
+    suspend fun deleteProfile(
+        @Header("Authorization") authHeader: String,
+        @Path("id") id: String
+    ): ProfileActionResponse
+
+    @POST("api/profiles/{id}/select")
+    suspend fun selectProfile(
+        @Header("Authorization") authHeader: String,
+        @Path("id") id: String
+    ): ProfileActionResponse
 }

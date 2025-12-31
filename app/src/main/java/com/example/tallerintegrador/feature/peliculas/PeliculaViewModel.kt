@@ -44,6 +44,7 @@ class PeliculaViewModel @Inject constructor(
                 val peliculasList = repository.getPeliculas(forceRefresh)
                 _peliculas.value = peliculasList
             } catch (e: Exception) {
+                android.util.Log.e("PeliculaViewModel", "Error loading peliculas", e)
                 _peliculas.value = emptyList()
             } finally {
                 _isLoadingList.value = false

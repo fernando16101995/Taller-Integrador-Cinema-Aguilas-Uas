@@ -122,144 +122,30 @@ fun AcercaDeScreen(navController: NavController) {
                 )
             }
 
-            // TECNOLOGÍAS
+            // Sección de tecnologías
             item {
                 SectionHeader("Tecnologías Utilizadas")
             }
 
-            item {
-                TechnologyCard(
-                    name = "Kotlin & Jetpack Compose",
-                    description = "Framework moderno para UI de Android",
-                    icon = Icons.Filled.Code
-                )
-            }
+            // ...existing code...
 
-            item {
-                TechnologyCard(
-                    name = "Laravel & PHP",
-                    description = "Backend API RESTful",
-                    icon = Icons.Filled.Storage
-                )
-            }
-
-            item {
-                TechnologyCard(
-                    name = "PostgreSQL",
-                    description = "Base de datos relacional",
-                    icon = Icons.Filled.DataObject
-                )
-            }
-
-            item {
-                TechnologyCard(
-                    name = "Room Database",
-                    description = "Cache local persistente",
-                    icon = Icons.Filled.SaveAlt
-                )
-            }
-
-            // ENLACES ÚTILES
+            // Sección de enlaces útiles
             item {
                 SectionHeader("Enlaces")
             }
 
-            item {
-                LinkCard(
-                    icon = Icons.Filled.Policy,
-                    title = "Política de Privacidad",
-                    onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW,
-                            "https://uas.edu.mx/privacidad".toUri())
-                        context.startActivity(intent)
-                    }
-                )
-            }
+            // ...existing code...
 
-            item {
-                LinkCard(
-                    icon = Icons.Filled.Gavel,
-                    title = "Términos y Condiciones",
-                    onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW,
-                            "https://uas.edu.mx/terminos".toUri())
-                        context.startActivity(intent)
-                    }
-                )
-            }
-
-            item {
-                LinkCard(
-                    icon = Icons.Filled.Copyright,
-                    title = "Licencias de Código Abierto",
-                    onClick = { showLicensesDialog = true }
-                )
-            }
-
-            item {
-                LinkCard(
-                    icon = Icons.Filled.BugReport,
-                    title = "Reportar un Problema",
-                    onClick = {
-                        val intent = Intent(Intent.ACTION_SENDTO).apply {
-                            data = "mailto:soporte@cinemaaguilas.com".toUri()
-                            putExtra(Intent.EXTRA_SUBJECT, "Reporte de Problema - Cinema Águilas")
-                        }
-                        context.startActivity(intent)
-                    }
-                )
-            }
-
-            // REDES SOCIALES
+            // Sección de redes sociales
             item {
                 SectionHeader("Síguenos")
             }
 
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 32.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    SocialButton(
-                        icon = Icons.Filled.Facebook,
-                        onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW,
-                                "https://www.facebook.com/FICuliacan/?locale=es_LA".toUri())
-                            context.startActivity(intent)
-                        }
-                    )
-                    SocialButton(
-                        icon = Icons.AutoMirrored.Filled.Chat,
-                        onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW,
-                                "https://x.com/uasoficialmx?lang=es".toUri())
-                            context.startActivity(intent)
-                        }
-                    )
-                    SocialButton(
-                        icon = Icons.Filled.PhotoCamera,
-                        onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW,
-                                "https://www.instagram.com/explore/locations/142496062813295/facultad-de-informatica-uas/recent/".toUri())
-                            context.startActivity(intent)
-                        }
-                    )
-                    SocialButton(
-                        icon = Icons.Filled.PlayArrow,
-                        onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW,
-                                "https://www.youtube.com/@UASoficial/featured".toUri())
-                            context.startActivity(intent)
-                        }
-                    )
-                }
-            }
+            // ...existing code...
 
             item { Spacer(modifier = Modifier.height(32.dp)) }
 
-            // COPYRIGHT
+            // Sección de copyright
             item {
                 Column(
                     modifier = Modifier
@@ -293,7 +179,7 @@ fun AcercaDeScreen(navController: NavController) {
         }
     }
 
-    // DIÁLOGO DE LICENCIAS
+    // Diálogo de licencias de código abierto
     if (showLicensesDialog) {
         AlertDialog(
             onDismissRequest = { showLicensesDialog = false },

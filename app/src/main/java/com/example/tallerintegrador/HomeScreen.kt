@@ -42,21 +42,19 @@ fun HomeScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(Unit) {
-        if (peliculas.isEmpty()) {
-            viewModel.getPeliculas()
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        if (favoritosIds.isEmpty()) {
-            favoritosViewModel.cargarFavoritos()
+        try {
+            if (peliculas.isEmpty()) {
+                viewModel.getPeliculas()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("HomeScreen", "Error loading peliculas", e)
         }
     }
 
     val peliculasPorGenero = remember(peliculas) {
         val map = mutableMapOf<String, MutableList<pelicula>>()
         peliculas.forEach { pelicula ->
-            (pelicula.genre ?: "").split(',').forEach { genero ->
+            pelicula.genre.split(',').forEach { genero ->
                 val trimmedGenero = genero.trim()
                 if (trimmedGenero.isNotEmpty()) {
                     map.getOrPut(trimmedGenero) { mutableListOf() }.add(pelicula)

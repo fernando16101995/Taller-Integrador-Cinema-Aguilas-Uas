@@ -4,6 +4,7 @@ import com.example.tallerintegrador.data.local.cache.CacheManager
 import com.example.tallerintegrador.data.network.ApiService
 import com.example.tallerintegrador.data.repository.FavoritosRepository
 import com.example.tallerintegrador.data.repository.PeliculaRepository
+import com.example.tallerintegrador.data.repository.ProfilesRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -30,5 +31,14 @@ object RepositoryModule {
         cacheManager: CacheManager
     ): FavoritosRepository {
         return FavoritosRepository(apiService, cacheManager)
+    }
+
+    @Provides
+    @Singleton
+    fun provideProfilesRepository(
+        apiService: ApiService,
+        tokenManager: com.example.tallerintegrador.data.local.TokenManager
+    ): ProfilesRepository {
+        return ProfilesRepository(apiService, tokenManager)
     }
 }

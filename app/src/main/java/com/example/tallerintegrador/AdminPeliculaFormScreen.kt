@@ -32,7 +32,7 @@ fun AdminPeliculaFormScreen(
     val isLoading by adminViewModel.isLoading.collectAsState()
     val error by adminViewModel.error.collectAsState()
 
-    // CRÍTICO: Buscar la película REACTIVAMENTE
+    // Buscar la película de forma reactiva
     val peliculaExistente = remember(peliculas, peliculaId) {
         peliculaId?.let { id ->
             peliculas.find { it.id == id }
@@ -42,7 +42,7 @@ fun AdminPeliculaFormScreen(
     val esEdicion = peliculaExistente != null
     val titulo = if (esEdicion) "Editar Película" else "Agregar Película"
 
-    // Estados del formulario CON VALORES INICIALES
+    // Estados del formulario con valores iniciales
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var posterUrl by remember { mutableStateOf("") }
@@ -51,7 +51,7 @@ fun AdminPeliculaFormScreen(
     var genre by remember { mutableStateOf("") }
     var datosCarCargados by remember { mutableStateOf(false) }
 
-    // CARGAR DATOS DE LA PELÍCULA EXISTENTE
+    // Cargar datos de la película existente
     LaunchedEffect(peliculaExistente) {
         if (peliculaExistente != null && !datosCarCargados) {
             title = peliculaExistente.title
@@ -67,7 +67,7 @@ fun AdminPeliculaFormScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Validaciones
+    // Validaciones del formulario
     val titleError = remember(title) {
         when {
             title.isBlank() -> "El título es obligatorio"
@@ -172,7 +172,7 @@ fun AdminPeliculaFormScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // MOSTRAR INDICADOR SI ESTÁ CARGANDO DATOS
+            // Mostrar indicador mientras se cargan los datos
             if (peliculaId != null && peliculaExistente == null && !datosCarCargados) {
                 Column(
                     modifier = Modifier
@@ -195,7 +195,7 @@ fun AdminPeliculaFormScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // INDICADOR VISUAL DE MODO
+                    // Indicador visual del modo de edición o creación
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -245,7 +245,7 @@ fun AdminPeliculaFormScreen(
                         }
                     }
 
-                    // TÍTULO
+                    // Campo de título
                     item {
                         OutlinedTextField(
                             value = title,
@@ -273,7 +273,7 @@ fun AdminPeliculaFormScreen(
                         )
                     }
 
-                    // DESCRIPCIÓN
+                    // Campo de descripción
                     item {
                         OutlinedTextField(
                             value = description,
@@ -303,7 +303,7 @@ fun AdminPeliculaFormScreen(
                         )
                     }
 
-                    // GÉNERO
+                    // Campo de género
                     item {
                         OutlinedTextField(
                             value = genre,
@@ -340,7 +340,7 @@ fun AdminPeliculaFormScreen(
                         )
                     }
 
-                    // DURACIÓN
+                    // Campo de duración en minutos
                     item {
                         OutlinedTextField(
                             value = durationMinutes,
@@ -372,7 +372,7 @@ fun AdminPeliculaFormScreen(
                         )
                     }
 
-                    // URL PÓSTER
+                    // Campo de URL del póster
                     item {
                         OutlinedTextField(
                             value = posterUrl,
@@ -406,7 +406,7 @@ fun AdminPeliculaFormScreen(
                         )
                     }
 
-                    // PREVIEW DEL PÓSTER
+                    // Vista previa del póster
                     if (posterUrl.isNotBlank() && posterUrl.startsWith("http")) {
                         item {
                             Card(
@@ -452,7 +452,7 @@ fun AdminPeliculaFormScreen(
                         }
                     }
 
-                    // URL VIDEO
+                    // Campo de URL del video
                     item {
                         OutlinedTextField(
                             value = videoUrl,
@@ -486,7 +486,7 @@ fun AdminPeliculaFormScreen(
                         )
                     }
 
-                    // BOTONES
+                    // Botones de acción
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),

@@ -7,6 +7,8 @@ plugins {
 
     // ✅ NUEVO: Hilt
     id("com.google.dagger.hilt.android")
+
+    id("kotlin-parcelize")
 }
 
 android {

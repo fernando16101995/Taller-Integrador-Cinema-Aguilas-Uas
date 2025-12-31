@@ -28,25 +28,30 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.tallerintegrador.auth.AuthViewModel
 import com.example.tallerintegrador.auth.state.AuthState
-import com.example.tallerintegrador.data.model.*
+import com.example.tallerintegrador.data.model.LoginRequest
 import com.example.tallerintegrador.ui.theme.TallerIntegradorTheme
 import kotlinx.coroutines.launch
 
 @Composable
-fun LoginScreen(navController: NavController, authViewModel: AuthViewModel = viewModel()) {
+fun LoginScreen(
+    navController: NavController,
+    authViewModel: AuthViewModel = viewModel()
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
-    val authState by authViewModel.authState
 
+    val authState by authViewModel.authState
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(authState) {
         when (val state = authState) {
-            is AuthState.Success -> {
-                navController.navigate("home") {
-                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+            is AuthState.AuthSuccess -> {
+                navController.navigate("profiles") {
+                    popUpTo(navController.graph.startDestinationId) {
+                        inclusive = true
+                    }
                 }
             }
             is AuthState.Error -> {
@@ -61,28 +66,28 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel = vie
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Fondo con imagen
+
             Image(
                 painter = painterResource(id = R.drawable.login_background),
-                contentDescription = "Background",
+                contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
 
-            // Capa oscura ADAPTATIVA
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(
+                            listOf(
                                 Color.Black.copy(alpha = 0.6f),
-                                MaterialTheme.colorScheme.background.copy(alpha = 0.8f),
+                                MaterialTheme.colorScheme.background.copy(alpha = 0.85f),
                                 MaterialTheme.colorScheme.background
                             )
                         )
@@ -96,86 +101,51 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel = vie
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Logo/Título
+
                 Text(
                     text = "CINEMA ÁGUILAS",
-                    color = MaterialTheme.colorScheme.primary,
                     fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
                 )
+
                 Text(
                     text = "Inicia sesión",
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
                 )
 
                 Spacer(modifier = Modifier.height(48.dp))
 
-                // Campo Email
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = {
-                        Text(
-                            "Email",
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    },
+                    label = { Text("Email") },
                     leadingIcon = {
-                        Icon(
-                            Icons.Filled.Email,
-                            contentDescription = "Email",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                        Icon(Icons.Default.Email, contentDescription = null)
                     },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        cursorColor = MaterialTheme.colorScheme.primary,
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                        focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                        focusedLeadingIconColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLeadingIconColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                    ),
                     shape = RoundedCornerShape(12.dp)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Campo Contraseña
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = {
-                        Text(
-                            "Contraseña",
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    },
+                    label = { Text("Contraseña") },
                     leadingIcon = {
-                        Icon(
-                            Icons.Filled.Lock,
-                            contentDescription = "Contraseña",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                        Icon(Icons.Default.Lock, contentDescription = null)
                     },
                     trailingIcon = {
                         IconButton(onClick = { showPassword = !showPassword }) {
                             Icon(
                                 imageVector = if (showPassword)
-                                    Icons.Filled.Visibility
+                                    Icons.Default.Visibility
                                 else
-                                    Icons.Filled.VisibilityOff,
-                                contentDescription = if (showPassword)
-                                    "Ocultar contraseña"
-                                else
-                                    "Mostrar contraseña",
-                                tint = MaterialTheme.colorScheme.primary
+                                    Icons.Default.VisibilityOff,
+                                contentDescription = null
                             )
                         }
                     },
@@ -185,79 +155,60 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel = vie
                     else
                         PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        cursorColor = MaterialTheme.colorScheme.primary,
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                        focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                        focusedLeadingIconColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLeadingIconColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                        focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
-                        unfocusedTrailingIconColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                    ),
                     shape = RoundedCornerShape(12.dp)
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Olvidaste contraseña
+                // 🔹 NAVEGACIÓN SEGURA A RECUPERACIÓN
                 TextButton(
-                    onClick = { /* TODO: Recuperar contraseña */ },
+                    onClick = {
+                        navController.navigate("recuperacion") {
+                            launchSingleTop = true
+                        }
+                    },
                     modifier = Modifier.align(Alignment.End)
                 ) {
                     Text(
-                        "¿Olvidaste tu contraseña?",
+                        text = "¿Olvidaste tu contraseña?",
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Botón Login
                 Button(
-                    onClick = { authViewModel.login(LoginRequest(email, password)) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    ),
+                    onClick = {
+                        authViewModel.login(LoginRequest(email, password))
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    enabled = authState != AuthState.Loading,
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = authState != AuthState.Loading
                 ) {
                     if (authState == AuthState.Loading) {
                         CircularProgressIndicator(
-                            color = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.size(24.dp),
                             strokeWidth = 2.dp
                         )
                     } else {
                         Text(
-                            "Comenzar ahora",
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
+                            text = "Comenzar ahora",
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Link a registro
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "¿No tienes cuenta? ",
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-                    )
-                    TextButton(onClick = { navController.navigate("register") }) {
+                Row {
+                    Text("¿No tienes cuenta? ")
+                    TextButton(
+                        onClick = { navController.navigate("register") }
+                    ) {
                         Text(
-                            "Regístrate",
-                            color = MaterialTheme.colorScheme.primary,
+                            text = "Regístrate",
                             fontWeight = FontWeight.Bold
                         )
                     }

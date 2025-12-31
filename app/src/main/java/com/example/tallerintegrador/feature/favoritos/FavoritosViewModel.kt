@@ -33,29 +33,29 @@ class FavoritosViewModel @Inject constructor(
             initialValue = emptySet()
         )
 
-    // Auto-recargar cuando cambian los IDs
-    init {
+    fun cargarFavoritos() {
         viewModelScope.launch {
-            favoritosIds.collect { ids ->
-                // Cuando cambian los IDs, recarga la lista completa
-                if (ids.isNotEmpty()) {
+            try {
+                val token = tokenManager.getToken()
+                if (token != null) {
                     cargarFavoritosInternamente()
                 }
+            } catch (e: Exception) {
+                android.util.Log.e("FavoritosViewModel", "Error loading favoritos", e)
+                _error.value = e.message
+                _favoritos.value = emptyList()
             }
-        }
-    }
-
-    fun cargarFavoritos() {
-        val token = getTokenOrNull() ?: return
-
-        viewModelScope.launch {
-            cargarFavoritosInternamente()
         }
     }
 
     // Método interno privado
     private suspend fun cargarFavoritosInternamente() {
-        val token = getTokenOrNull() ?: return
+        val token = tokenManager.getToken()
+        if (token == null) {
+            android.util.Log.w("FavoritosViewModel", "No token available, skipping favoritos load")
+            _favoritos.value = emptyList()
+            return
+        }
 
         _isLoading.value = true
         _error.value = null
@@ -63,15 +63,22 @@ class FavoritosViewModel @Inject constructor(
         try {
             val peliculas = repository.getFavoritos(token)
             _favoritos.value = peliculas
+            android.util.Log.d("FavoritosViewModel", "Favoritos loaded: ${peliculas.size}")
         } catch (e: Exception) {
-            _error.value = "Error al cargar favoritos: ${e.message}"
+            android.util.Log.e("FavoritosViewModel", "Error loading favoritos internamente", e)
+            _error.value = null // No mostrar error al usuario
+            _favoritos.value = emptyList()
         } finally {
             _isLoading.value = false
         }
     }
 
     fun toggleFavorito(peliculaId: Int, currentlyFavorite: Boolean) {
-        val token = getTokenOrNull() ?: return
+        val token = tokenManager.getToken()
+        if (token == null) {
+            android.util.Log.w("FavoritosViewModel", "No token available for toggleFavorito")
+            return
+        }
 
         viewModelScope.launch {
             try {
@@ -81,25 +88,38 @@ class FavoritosViewModel @Inject constructor(
                     repository.addFavorito(token, peliculaId)
                 }
             } catch (e: Exception) {
-                _error.value = "Error al actualizar favorito: ${e.message}"
+                android.util.Log.e("FavoritosViewModel", "Error toggling favorito", e)
+                _error.value = null // No mostrar error
             }
         }
     }
 
     suspend fun esFavorito(peliculaId: Int): Boolean {
-        return repository.isFavorito(peliculaId)
+        return try {
+            repository.isFavorito(peliculaId)
+        } catch (e: Exception) {
+            android.util.Log.e("FavoritosViewModel", "Error checking isFavorito", e)
+            false
+        }
     }
 
     fun esFavoritoFlow(peliculaId: Int): Flow<Boolean> {
-        return repository.isFavoritoFlow(peliculaId)
+        return try {
+            repository.isFavoritoFlow(peliculaId)
+        } catch (e: Exception) {
+            android.util.Log.e("FavoritosViewModel", "Error getting isFavoritoFlow", e)
+            flowOf(false)
+        }
     }
 
     fun clearCache() {
         viewModelScope.launch {
-            repository.clearCache()
-            _favoritos.value = emptyList()
+            try {
+                repository.clearCache()
+                _favoritos.value = emptyList()
+            } catch (e: Exception) {
+                android.util.Log.e("FavoritosViewModel", "Error clearing cache", e)
+            }
         }
     }
-
-    private fun getTokenOrNull(): String? = tokenManager.getToken()
 }

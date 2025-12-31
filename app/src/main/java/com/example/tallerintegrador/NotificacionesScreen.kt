@@ -24,7 +24,10 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 
 /**
- * ✅ PANTALLA DE NOTIFICACIONES CON SOPORTE DE TEMA
+/**
+ * PANTALLA DE NOTIFICACIONES CON SOPORTE DE TEMA
+ * Muestra notificaciones del sistema y permite gestionarlas
+ */
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -84,7 +84,7 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel = 
 
     LaunchedEffect(authState) {
         when (val state = authState) {
-            is AuthState.Success -> {
+            is AuthState.AuthSuccess -> {
                 navController.navigate("home") {
                     popUpTo(navController.graph.startDestinationId) { inclusive = true }
                 }

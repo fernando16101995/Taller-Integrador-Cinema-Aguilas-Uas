@@ -127,70 +127,19 @@ fun AdminDashboardScreen(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        // BIENVENIDA
+                        // Tarjeta de bienvenida
                         item {
                             WelcomeCard()
                         }
 
-                        // ESTADÍSTICAS PRINCIPALES
+                        // Estadísticas principales del sistema
                         item {
                             SectionTitle("Resumen General")
                         }
 
-                        item {
-                            estadisticas?.let { stats ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    AnimatedStatsCard(
-                                        modifier = Modifier.weight(1f),
-                                        icon = Icons.Filled.People,
-                                        label = "Usuarios",
-                                        value = stats.totalUsuarios,
-                                        color = Color(0xFF4CAF50),
-                                        targetValue = stats.totalUsuarios
-                                    )
-                                    AnimatedStatsCard(
-                                        modifier = Modifier.weight(1f),
-                                        icon = Icons.Filled.Movie,
-                                        label = "Películas",
-                                        value = stats.totalPeliculas,
-                                        color = Color(0xFF2196F3),
-                                        targetValue = stats.totalPeliculas
-                                    )
-                                }
-                            }
-                        }
+                        // ...existing code...
 
-                        item {
-                            estadisticas?.let { stats ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    AnimatedStatsCard(
-                                        modifier = Modifier.weight(1f),
-                                        icon = Icons.Filled.Favorite,
-                                        label = "Favoritos",
-                                        value = stats.totalFavoritos,
-                                        color = Color(0xFFE91E63),
-                                        targetValue = stats.totalFavoritos
-                                    )
-                                    AnimatedStatsCard(
-                                        modifier = Modifier.weight(1f),
-                                        icon = Icons.AutoMirrored.Filled.TrendingUp,
-                                        label = "Popular",
-                                        value = 0,
-                                        color = Color(0xFFFF9800),
-                                        valueText = stats.peliculaMasPopular?.take(10) ?: "N/A",
-                                        targetValue = 100
-                                    )
-                                }
-                            }
-                        }
-
-                        // INDICADORES ADICIONALES
+                        // Indicadores adicionales de información
                         item {
                             estadisticas?.let { stats ->
                                 Card(
@@ -231,7 +180,7 @@ fun AdminDashboardScreen(
                             }
                         }
 
-                        // ACCIONES RÁPIDAS
+                        // Sección de acciones rápidas
                         item {
                             Spacer(modifier = Modifier.height(8.dp))
                             SectionTitle("Acciones Rápidas")
