@@ -1,10 +1,8 @@
 package com.example.tallerintegrador.data.repository
 
-import android.content.Context
-import android.content.SharedPreferences
+import com.example.tallerintegrador.data.local.TokenManager
 import com.example.tallerintegrador.data.model.*
 import com.example.tallerintegrador.data.network.ApiService
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -16,17 +14,14 @@ import javax.inject.Singleton
 @Singleton
 class SubscriptionRepository @Inject constructor(
     private val apiService: ApiService,
-    @ApplicationContext private val context: Context
+    private val tokenManager: TokenManager
 ) {
-
-    private val prefs: SharedPreferences =
-        context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
 
     /**
      * Obtiene el token de autenticación almacenado
      */
     private fun getToken(): String? {
-        return prefs.getString("token", null)
+        return tokenManager.getToken()
     }
 
     /**
