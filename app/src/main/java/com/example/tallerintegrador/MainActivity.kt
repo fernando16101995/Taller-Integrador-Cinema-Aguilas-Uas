@@ -247,10 +247,20 @@ fun MainNavigation() {
         composable("profiles") {
             ProfilesScreen(
                 onProfileSelected = {
-                    navController.navigate("home") {
+                    // Después de seleccionar perfil, ir a verificar suscripción
+                    navController.navigate("subscription") {
                         popUpTo("profiles") { inclusive = true }
                     }
                 }
+            )
+        }
+
+        // Pantalla de suscripción
+        // Verifica si el usuario tiene suscripción activa
+        // Si no tiene, muestra opciones de pago con Stripe
+        composable("subscription") {
+            com.example.tallerintegrador.feature.subscription.SubscriptionScreen(
+                navController = navController
             )
         }
 

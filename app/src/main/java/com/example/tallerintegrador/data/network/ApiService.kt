@@ -155,4 +155,27 @@ interface ApiService {
         @Header("Authorization") authHeader: String,
         @Path("id") id: String
     ): ProfileActionResponse
+
+    // ---------- SUSCRIPCIONES STRIPE ----------
+
+    @POST("api/stripe/create-checkout-session")
+    suspend fun createCheckoutSession(
+        @Header("Authorization") authHeader: String,
+        @Body request: CreateCheckoutSessionRequest
+    ): CheckoutSessionResponse
+
+    @GET("api/subscription/status")
+    suspend fun getSubscriptionStatus(
+        @Header("Authorization") authHeader: String
+    ): SubscriptionStatusResponse
+
+    @POST("api/subscription/verify")
+    suspend fun verifySubscription(
+        @Header("Authorization") authHeader: String
+    ): SubscriptionVerifyResponse
+
+    @GET("api/user")
+    suspend fun getUserInfo(
+        @Header("Authorization") authHeader: String
+    ): User
 }
