@@ -8,6 +8,23 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/*
+ * Archivo: SubscriptionRepository.kt
+ *
+ * Repositorio que gestiona toda la logica de suscripciones y pagos con Stripe.
+ * Maneja la comunicacion con el backend para crear sesiones de pago,
+ * verificar el estado de suscripcion y obtener informacion del usuario.
+ *
+ * Metodos principales:
+ * - createCheckoutSession: Inicia el proceso de pago con Stripe
+ * - getSubscriptionStatus: Consulta el estado de la suscripcion
+ * - verifySubscription: Valida si la suscripcion es activa
+ * - getUserInfo: Obtiene datos del usuario incluyendo suscripcion
+ * - hasActiveSubscription: Verifica rapidamente si tiene suscripcion activa
+ *
+ * Usa TokenManager para obtener el token de autenticacion automaticamente.
+ */
+
 /**
  * Repositorio para gestionar las suscripciones y pagos con Stripe
  */

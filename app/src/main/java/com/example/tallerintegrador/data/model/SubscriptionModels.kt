@@ -2,6 +2,19 @@ package com.example.tallerintegrador.data.model
 
 import com.google.gson.annotations.SerializedName
 
+/*
+ * Archivo: SubscriptionModels.kt
+ *
+ * Contiene los modelos de datos para el sistema de suscripciones con Stripe.
+ * Estos modelos representan las peticiones y respuestas del API de pagos.
+ *
+ * Modelos incluidos:
+ * - CreateCheckoutSessionRequest: Datos para iniciar una sesion de pago
+ * - CheckoutSessionResponse: URL y ID de sesion de Stripe
+ * - SubscriptionStatusResponse: Estado actual de la suscripcion del usuario
+ * - SubscriptionVerifyResponse: Validacion de suscripcion activa
+ */
+
 /**
  * Solicitud para crear una sesión de pago de Stripe
  */

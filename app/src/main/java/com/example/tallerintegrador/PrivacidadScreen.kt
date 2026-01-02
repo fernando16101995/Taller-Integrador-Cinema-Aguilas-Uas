@@ -24,6 +24,32 @@ import com.example.tallerintegrador.auth.AuthViewModel
 import com.example.tallerintegrador.data.local.TokenManager
 import kotlinx.coroutines.launch
 
+/*
+ * Archivo: PrivacidadScreen.kt
+ *
+ * Pantalla que gestiona la privacidad y seguridad de la cuenta del usuario.
+ *
+ * Seccion Privacidad:
+ * - Historial Visible: Activa/desactiva la visibilidad del historial
+ *   de peliculas vistas recientemente
+ * - Limpiar Historial: Elimina completamente el historial de reproduccion
+ *   con dialogo de confirmacion
+ *
+ * Seccion Seguridad:
+ * - Cambiar Contrasena: Redirige al flujo de recuperacion de contrasena
+ *   desde el login para mayor seguridad
+ * - Sesiones Activas: Muestra los dispositivos conectados y permite
+ *   cerrar sesion en todos ellos
+ *
+ * Seccion Gestion de Cuenta:
+ * - Informacion de Cuenta: Muestra el nombre de usuario, email e ID
+ * - Control Parental: Informacion sobre como activar el modo ninos
+ *   desde la pantalla de seleccion de perfiles
+ *
+ * Todas las preferencias se guardan en SharedPreferences con la clave
+ * "privacy_prefs" y persisten entre sesiones.
+ */
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrivacidadScreen(
@@ -37,27 +63,13 @@ fun PrivacidadScreen(
     val scope = rememberCoroutineScope()
 
     // Estados de privacidad
-    var perfilPrivado by remember {
-        mutableStateOf(prefs.getBoolean("perfil_privado", false))
-    }
     var historialVisible by remember {
         mutableStateOf(prefs.getBoolean("historial_visible", true))
     }
-    var controlParental by remember {
-        mutableStateOf(prefs.getBoolean("control_parental", false))
-    }
-    var dobleAutenticacion by remember {
-        mutableStateOf(prefs.getBoolean("2fa", false))
-    }
-    var sesionesActivas by remember {
-        mutableStateOf(prefs.getBoolean("sesiones_activas", true))
-    }
 
     // Diálogos
-    var showDeleteAccountDialog by remember { mutableStateOf(false) }
     var showClearHistoryDialog by remember { mutableStateOf(false) }
     var showSessionsDialog by remember { mutableStateOf(false) }
-    var showControlParentalDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -98,24 +110,6 @@ fun PrivacidadScreen(
 
             item {
                 PrivacySwitchItem(
-                    icon = Icons.Filled.Lock,
-                    title = "Perfil Privado",
-                    subtitle = "Solo tú puedes ver tu actividad",
-                    checked = perfilPrivado,
-                    onCheckedChange = {
-                        perfilPrivado = it
-                        prefs.edit().putBoolean("perfil_privado", it).apply()
-                        scope.launch {
-                            snackbarHostState.showSnackbar(
-                                if (it) "Perfil ahora es privado" else "Perfil ahora es público"
-                            )
-                        }
-                    }
-                )
-            }
-
-            item {
-                PrivacySwitchItem(
                     icon = Icons.Filled.History,
                     title = "Historial Visible",
                     subtitle = "Mostrar películas vistas recientemente",
@@ -123,6 +117,11 @@ fun PrivacidadScreen(
                     onCheckedChange = {
                         historialVisible = it
                         prefs.edit().putBoolean("historial_visible", it).apply()
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                if (it) "Historial visible" else "Historial oculto"
+                            )
+                        }
                     }
                 )
             }
@@ -142,30 +141,16 @@ fun PrivacidadScreen(
             }
 
             item {
-                PrivacySwitchItem(
-                    icon = Icons.Filled.Security,
-                    title = "Autenticación de Dos Factores",
-                    subtitle = "Protección adicional para tu cuenta",
-                    checked = dobleAutenticacion,
-                    onCheckedChange = {
-                        dobleAutenticacion = it
-                        prefs.edit().putBoolean("2fa", it).apply()
-                        scope.launch {
-                            snackbarHostState.showSnackbar(
-                                if (it) "2FA activado" else "2FA desactivado"
-                            )
-                        }
-                    }
-                )
-            }
-
-            item {
                 PrivacyActionItem(
                     icon = Icons.Filled.Password,
                     title = "Cambiar Contraseña",
-                    subtitle = "Actualizar tu contraseña de acceso",
+                    subtitle = "Usa 'Recuperar contraseña' en el login",
                     onClick = {
-                        navController?.navigate("editar_perfil")
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                "Cierra sesión y usa 'Recuperar contraseña' en el login"
+                            )
+                        }
                     }
                 )
             }
@@ -176,37 +161,6 @@ fun PrivacidadScreen(
                     title = "Sesiones Activas",
                     subtitle = "Gestionar dispositivos conectados",
                     onClick = { showSessionsDialog = true }
-                )
-            }
-
-            // CONTROL PARENTAL
-            item {
-                SectionHeaderPriv("Control Parental")
-            }
-
-            item {
-                PrivacySwitchItem(
-                    icon = Icons.Filled.FamilyRestroom,
-                    title = "Modo Niños",
-                    subtitle = "Contenido apropiado para menores",
-                    checked = controlParental,
-                    onCheckedChange = {
-                        if (it) {
-                            showControlParentalDialog = true
-                        } else {
-                            controlParental = false
-                            prefs.edit().putBoolean("control_parental", false).apply()
-                        }
-                    }
-                )
-            }
-
-            item {
-                InfoCardPriv(
-                    icon = Icons.Filled.Info,
-                    title = "Control Parental",
-                    description = "Restringe el acceso a contenido para adultos y permite " +
-                            "establecer límites de tiempo de visualización."
                 )
             }
 
@@ -226,27 +180,10 @@ fun PrivacidadScreen(
             }
 
             item {
-                PrivacyActionItem(
-                    icon = Icons.Filled.Download,
-                    title = "Descargar Mis Datos",
-                    subtitle = "Obtén una copia de tu información",
-                    onClick = {
-                        scope.launch {
-                            snackbarHostState.showSnackbar(
-                                "Preparando descarga de datos..."
-                            )
-                        }
-                    }
-                )
-            }
-
-            item {
-                PrivacyActionItem(
-                    icon = Icons.Filled.DeleteForever,
-                    title = "Eliminar Cuenta",
-                    subtitle = "Eliminar permanentemente tu cuenta",
-                    onClick = { showDeleteAccountDialog = true },
-                    isDestructive = true
+                InfoCardPriv(
+                    icon = Icons.Filled.Info,
+                    title = "Sobre Control Parental",
+                    description = "Para acceso infantil, selecciona un perfil de niño desde la pantalla de perfiles."
                 )
             }
 
@@ -289,69 +226,6 @@ fun PrivacidadScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showClearHistoryDialog = false }) {
-                    Text("Cancelar", color = MaterialTheme.colorScheme.primary)
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.surface,
-            shape = RoundedCornerShape(16.dp)
-        )
-    }
-
-    // DIÁLOGO: ELIMINAR CUENTA
-    if (showDeleteAccountDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteAccountDialog = false },
-            icon = {
-                Icon(
-                    Icons.Filled.Warning,
-                    contentDescription = "Advertencia",
-                    tint = Color.Red,
-                    modifier = Modifier.size(48.dp)
-                )
-            },
-            title = {
-                Text(
-                    "Eliminar Cuenta",
-                    color = Color.Red,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Column {
-                    Text(
-                        "⚠️ Esta acción es IRREVERSIBLE",
-                        color = Color.Red,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        "Se eliminarán permanentemente:\n" +
-                                "• Tu perfil y datos personales\n" +
-                                "• Historial de reproducción\n" +
-                                "• Listas y favoritos\n" +
-                                "• Preferencias guardadas",
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteAccountDialog = false
-                        scope.launch {
-                            authViewModel.logout()
-                            navController?.navigate("welcome") {
-                                popUpTo(0) { inclusive = true }
-                            }
-                            snackbarHostState.showSnackbar("Cuenta eliminada")
-                        }
-                    }
-                ) {
-                    Text("Eliminar Cuenta", color = Color.Red, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteAccountDialog = false }) {
                     Text("Cancelar", color = MaterialTheme.colorScheme.primary)
                 }
             },
@@ -405,49 +279,6 @@ fun PrivacidadScreen(
                     }
                 ) {
                     Text("Cerrar Todas", color = Color.Red)
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.surface,
-            shape = RoundedCornerShape(16.dp)
-        )
-    }
-
-    // DIÁLOGO: CONTROL PARENTAL
-    if (showControlParentalDialog) {
-        AlertDialog(
-            onDismissRequest = { showControlParentalDialog = false },
-            title = {
-                Text(
-                    "Activar Modo Niños",
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text(
-                    "El modo niños filtrará todo el contenido para mostrar solo " +
-                            "películas y series apropiadas para menores. Se aplicará a " +
-                            "todo el perfil.\n\n¿Deseas activarlo?",
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        controlParental = true
-                        prefs.edit().putBoolean("control_parental", true).apply()
-                        showControlParentalDialog = false
-                        scope.launch {
-                            snackbarHostState.showSnackbar("Modo Niños activado")
-                        }
-                    }
-                ) {
-                    Text("Activar", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showControlParentalDialog = false }) {
-                    Text("Cancelar", color = MaterialTheme.colorScheme.onSurface)
                 }
             },
             containerColor = MaterialTheme.colorScheme.surface,

@@ -24,8 +24,36 @@ import com.example.tallerintegrador.feature.peliculas.PeliculaViewModel
 import com.example.tallerintegrador.ui.theme.LocalThemeManager
 import kotlinx.coroutines.launch
 
+/*
+ * Archivo: ConfiguracionScreen.kt
+ *
+ * Pantalla de configuracion de la aplicacion que permite al usuario ajustar
+ * preferencias de apariencia, reproduccion y visualizar informacion de la app.
+ *
+ * Opciones disponibles:
+ *
+ * Seccion Apariencia:
+ * - Modo Oscuro/Claro: Cambia entre tema oscuro y claro de forma instantanea
+ *
+ * Seccion Reproduccion:
+ * - Calidad de Video: Selecciona entre SD, HD, Full HD y 4K
+ * - Autoplay: Activa/desactiva reproduccion automatica del siguiente episodio
+ * - Reproduccion Automatica de Avances: Activa/desactiva reproduccion de trailers
+ *
+ * Seccion Almacenamiento:
+ * - Limpiar Cache: Elimina datos temporales para liberar espacio
+ * - Actualizar Catalogo: Fuerza la actualizacion de la lista de peliculas
+ *
+ * Seccion Informacion:
+ * - Version de la App: Muestra la version actual (1.0.0)
+ * - Compilacion: Muestra el numero de build (Build 2025.01)
+ *
+ * Todas las preferencias se guardan en SharedPreferences y persisten
+ * entre sesiones de la aplicacion.
+ */
+
 /**
- * PANTALLA DE CONFIGURACIÓN CON CAMBIO DE TEMA INSTANTÁNEO
+ * Pantalla de configuracion con cambio de tema instantaneo
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,20 +72,11 @@ fun ConfiguracionScreen(
     val isDarkMode by themeManager.isDarkMode.collectAsState()
 
     // ===== ESTADOS DE CONFIGURACIÓN =====
-    var notificacionesActivadas by remember {
-        mutableStateOf(prefs.getBoolean("notificaciones", true))
-    }
     var autoplayActivado by remember {
         mutableStateOf(prefs.getBoolean("autoplay", true))
     }
     var calidadVideo by remember {
         mutableStateOf(prefs.getString("calidad_video", "HD") ?: "HD")
-    }
-    var idioma by remember {
-        mutableStateOf(prefs.getString("idioma", "Español") ?: "Español")
-    }
-    var descargasWifiOnly by remember {
-        mutableStateOf(prefs.getBoolean("descargas_wifi", true))
     }
     var reproduccionAutomatica by remember {
         mutableStateOf(prefs.getBoolean("reproduccion_auto", false))
@@ -65,7 +84,6 @@ fun ConfiguracionScreen(
 
     // Diálogos
     var showCalidadDialog by remember { mutableStateOf(false) }
-    var showIdiomaDialog by remember { mutableStateOf(false) }
     var showClearCacheDialog by remember { mutableStateOf(false) }
 
     // COLORES DINÁMICOS según el tema
@@ -178,65 +196,6 @@ fun ConfiguracionScreen(
                 )
             }
 
-            // ===== SECCIÓN: DESCARGAS =====
-            item {
-                SectionHeader("Descargas")
-            }
-
-            item {
-                SettingItemSwitch(
-                    icon = Icons.Filled.Wifi,
-                    title = "Solo descargar con Wi-Fi",
-                    subtitle = "Evita consumo de datos móviles",
-                    checked = descargasWifiOnly,
-                    onCheckedChange = {
-                        descargasWifiOnly = it
-                        prefs.edit().putBoolean("descargas_wifi", it).apply()
-                        scope.launch {
-                            snackbarHostState.showSnackbar(
-                                if (it) "Solo descargas por Wi-Fi" else "Descargas por cualquier red"
-                            )
-                        }
-                    }
-                )
-            }
-
-            // ===== SECCIÓN: NOTIFICACIONES =====
-            item {
-                SectionHeader("Notificaciones")
-            }
-
-            item {
-                SettingItemSwitch(
-                    icon = Icons.Filled.Notifications,
-                    title = "Notificaciones Push",
-                    subtitle = "Recibir alertas de nuevos contenidos",
-                    checked = notificacionesActivadas,
-                    onCheckedChange = {
-                        notificacionesActivadas = it
-                        prefs.edit().putBoolean("notificaciones", it).apply()
-                        scope.launch {
-                            snackbarHostState.showSnackbar(
-                                if (it) "Notificaciones activadas" else "Notificaciones desactivadas"
-                            )
-                        }
-                    }
-                )
-            }
-
-            // ===== SECCIÓN: IDIOMA Y REGIÓN =====
-            item {
-                SectionHeader("Idioma y Región")
-            }
-
-            item {
-                SettingItemWithDialog(
-                    icon = Icons.Filled.Language,
-                    title = "Idioma",
-                    subtitle = idioma,
-                    onClick = { showIdiomaDialog = true }
-                )
-            }
 
             // ===== SECCIÓN: ALMACENAMIENTO =====
             item {
@@ -346,56 +305,6 @@ fun ConfiguracionScreen(
         )
     }
 
-    // ===== DIÁLOGO DE IDIOMA =====
-    if (showIdiomaDialog) {
-        AlertDialog(
-            onDismissRequest = { showIdiomaDialog = false },
-            title = {
-                Text(
-                    "Seleccionar Idioma",
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Column {
-                    listOf("Español", "English", "Français", "Português").forEach { lang ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = idioma == lang,
-                                onClick = {
-                                    idioma = lang
-                                    prefs.edit().putString("idioma", lang).apply()
-                                    showIdiomaDialog = false
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar("Idioma cambiado a $lang")
-                                    }
-                                },
-                                colors = RadioButtonDefaults.colors(
-                                    selectedColor = MaterialTheme.colorScheme.primary,
-                                    unselectedColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(lang, color = MaterialTheme.colorScheme.onBackground)
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showIdiomaDialog = false }) {
-                    Text("Cerrar", color = MaterialTheme.colorScheme.primary)
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.surface,
-            shape = RoundedCornerShape(16.dp)
-        )
-    }
 
     // ===== DIÁLOGO DE LIMPIAR CACHÉ =====
     if (showClearCacheDialog) {

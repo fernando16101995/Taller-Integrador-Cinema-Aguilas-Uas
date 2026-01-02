@@ -23,11 +23,31 @@ import androidx.core.content.edit
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 
-/**
-/**
- * PANTALLA DE NOTIFICACIONES CON SOPORTE DE TEMA
- * Muestra notificaciones del sistema y permite gestionarlas
+/*
+ * Archivo: NotificacionesScreen.kt
+ *
+ * Pantalla que permite gestionar las notificaciones de la aplicacion.
+ *
+ * Control General:
+ * - Activar/Desactivar Notificaciones: Switch principal que controla
+ *   todas las notificaciones de la app
+ *
+ * Categorias de Contenido:
+ * - Nuevos Estrenos: Notifica cuando se agregan peliculas o series nuevas
+ * - Recomendaciones: Notifica sobre contenido personalizado para el usuario
+ * - Proximos Episodios: Notifica cuando hay nuevos capitulos de series
+ * - Actualizaciones de la App: Notifica sobre nuevas funciones y mejoras
+ *
+ * Todas las preferencias se guardan en SharedPreferences con la clave
+ * "notif_prefs" y persisten entre sesiones de la aplicacion.
+ *
+ * Cada opcion puede activarse/desactivarse de forma independiente,
+ * pero requiere que el control general este activado para funcionar.
  */
+
+/**
+ * Pantalla de notificaciones con soporte de tema
+ * Muestra notificaciones del sistema y permite gestionarlas
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,20 +70,8 @@ fun NotificacionesScreen(navController: NavController?) {
     var proximosEpisodios by remember {
         mutableStateOf(prefs.getBoolean("proximos_episodios", true))
     }
-    var ofertas by remember {
-        mutableStateOf(prefs.getBoolean("ofertas", false))
-    }
     var actualizaciones by remember {
         mutableStateOf(prefs.getBoolean("actualizaciones", true))
-    }
-    var noMolestar by remember {
-        mutableStateOf(prefs.getBoolean("no_molestar", false))
-    }
-    var notificacionesSonido by remember {
-        mutableStateOf(prefs.getBoolean("sonido", true))
-    }
-    var notificacionesVibracion by remember {
-        mutableStateOf(prefs.getBoolean("vibracion", true))
     }
 
     Scaffold(
@@ -172,20 +180,6 @@ fun NotificacionesScreen(navController: NavController?) {
 
             item {
                 NotificationSwitchItem(
-                    icon = Icons.Filled.LocalOffer,
-                    title = "Ofertas y Promociones",
-                    subtitle = "Descuentos especiales",
-                    checked = ofertas,
-                    onCheckedChange = {
-                        ofertas = it
-                        prefs.edit { putBoolean("ofertas", it) }
-                    },
-                    enabled = notificacionesGlobales
-                )
-            }
-
-            item {
-                NotificationSwitchItem(
                     icon = Icons.Filled.Update,
                     title = "Actualizaciones de la App",
                     subtitle = "Nuevas funciones y mejoras",
@@ -193,59 +187,6 @@ fun NotificacionesScreen(navController: NavController?) {
                     onCheckedChange = {
                         actualizaciones = it
                         prefs.edit { putBoolean("actualizaciones", it) }
-                    },
-                    enabled = notificacionesGlobales
-                )
-            }
-
-            // PREFERENCIAS
-            item {
-                SectionHeaderNotif("Preferencias")
-            }
-
-            item {
-                NotificationSwitchItem(
-                    icon = Icons.Filled.DoNotDisturb,
-                    title = "Modo No Molestar",
-                    subtitle = "22:00 - 08:00",
-                    checked = noMolestar,
-                    onCheckedChange = {
-                        noMolestar = it
-                        prefs.edit { putBoolean("no_molestar", it) }
-                        scope.launch {
-                            snackbarHostState.showSnackbar(
-                                if (it) "No Molestar: 22:00 - 08:00"
-                                else "No Molestar desactivado"
-                            )
-                        }
-                    },
-                    enabled = notificacionesGlobales
-                )
-            }
-
-            item {
-                NotificationSwitchItem(
-                    icon = Icons.AutoMirrored.Filled.VolumeUp,
-                    title = "Sonido",
-                    subtitle = "Reproducir sonido de notificación",
-                    checked = notificacionesSonido,
-                    onCheckedChange = {
-                        notificacionesSonido = it
-                        prefs.edit { putBoolean("sonido", it) }
-                    },
-                    enabled = notificacionesGlobales
-                )
-            }
-
-            item {
-                NotificationSwitchItem(
-                    icon = Icons.Filled.Vibration,
-                    title = "Vibración",
-                    subtitle = "Vibrar al recibir notificación",
-                    checked = notificacionesVibracion,
-                    onCheckedChange = {
-                        notificacionesVibracion = it
-                        prefs.edit { putBoolean("vibracion", it) }
                     },
                     enabled = notificacionesGlobales
                 )

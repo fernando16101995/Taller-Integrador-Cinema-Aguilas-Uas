@@ -28,6 +28,29 @@ import com.example.tallerintegrador.auth.AuthViewModel
 import com.example.tallerintegrador.data.local.TokenManager
 import kotlinx.coroutines.launch
 
+/*
+ * Archivo: EditarPerfilScreen.kt
+ *
+ * Pantalla que permite al usuario editar su informacion personal.
+ *
+ * Funcionalidades:
+ * - Cambiar nombre de usuario: Edita el nombre mostrado en la app
+ * - Cambiar correo electronico: Actualiza el email de la cuenta
+ * - Cambiar avatar: Selecciona entre 6 avatares predefinidos
+ *
+ * Validaciones implementadas:
+ * - Nombre: Minimo 3 caracteres, no puede estar vacio
+ * - Email: Debe ser un formato valido de correo electronico
+ *
+ * Nota sobre cambio de contrasena:
+ * Para cambiar la contrasena, el usuario debe usar la opcion
+ * "Recuperar contrasena" desde la pantalla de inicio de sesion.
+ * Esto garantiza un proceso seguro mediante codigo de verificacion por email.
+ *
+ * Todos los cambios se guardan en TokenManager y se actualizan
+ * en la sesion actual del usuario.
+ */
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditarPerfilScreen(
@@ -42,13 +65,6 @@ fun EditarPerfilScreen(
     // Estados de formulario
     var nombre by remember { mutableStateOf(tokenManager.getUserName() ?: "") }
     var email by remember { mutableStateOf(tokenManager.getUserEmail() ?: "") }
-    var passwordActual by remember { mutableStateOf("") }
-    var passwordNueva by remember { mutableStateOf("") }
-    var passwordConfirm by remember { mutableStateOf("") }
-
-    var showPasswordActual by remember { mutableStateOf(false) }
-    var showPasswordNueva by remember { mutableStateOf(false) }
-    var showPasswordConfirm by remember { mutableStateOf(false) }
 
     var selectedAvatar by remember { mutableIntStateOf(
         context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
@@ -77,18 +93,7 @@ fun EditarPerfilScreen(
         }
     }
 
-    val passwordError = remember(passwordNueva, passwordConfirm) {
-        when {
-            passwordNueva.isNotEmpty() && passwordNueva.length < 6 ->
-                "La contraseña debe tener al menos 6 caracteres"
-            passwordNueva != passwordConfirm ->
-                "Las contraseñas no coinciden"
-            else -> null
-        }
-    }
-
-    val isFormValid = nombreError == null && emailError == null &&
-            (passwordNueva.isEmpty() || passwordError == null)
+    val isFormValid = nombreError == null && emailError == null
 
     Scaffold(
         topBar = {
@@ -270,164 +275,44 @@ fun EditarPerfilScreen(
 
             item { Spacer(modifier = Modifier.height(32.dp)) }
 
-            // CAMBIAR CONTRASEÑA
+            // AVISO SOBRE CONTRASEÑA
             item {
-                Row(
+                Card(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    ),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(
-                        "Cambiar Contraseña",
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        "(Opcional)",
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-                        fontSize = 14.sp
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Filled.Info,
+                            contentDescription = "Info",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "¿Olvidaste tu contraseña?",
+                                color = MaterialTheme.colorScheme.onBackground,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                "Usa la opción 'Recuperar contraseña' en la pantalla de inicio de sesión para restablecerla de forma segura",
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
                 }
-            }
-
-            item { Spacer(modifier = Modifier.height(16.dp)) }
-
-            // Contraseña actual
-            item {
-                OutlinedTextField(
-                    value = passwordActual,
-                    onValueChange = { passwordActual = it },
-                    label = { Text("Contraseña actual", color = MaterialTheme.colorScheme.primary) },
-                    leadingIcon = {
-                        Icon(Icons.Filled.Lock, "Contraseña", tint = MaterialTheme.colorScheme.primary)
-                    },
-                    trailingIcon = {
-                        IconButton(onClick = { showPasswordActual = !showPasswordActual }) {
-                            Icon(
-                                imageVector = if (showPasswordActual)
-                                    Icons.Filled.Visibility
-                                else
-                                    Icons.Filled.VisibilityOff,
-                                contentDescription = "Mostrar contraseña",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    },
-                    visualTransformation = if (showPasswordActual)
-                        VisualTransformation.None
-                    else
-                        PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        cursorColor = MaterialTheme.colorScheme.primary,
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                        focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                )
-            }
-
-            item { Spacer(modifier = Modifier.height(16.dp)) }
-
-            // Nueva contraseña
-            item {
-                OutlinedTextField(
-                    value = passwordNueva,
-                    onValueChange = { passwordNueva = it },
-                    label = { Text("Nueva contraseña", color = MaterialTheme.colorScheme.primary) },
-                    leadingIcon = {
-                        Icon(Icons.Filled.LockOpen, "Nueva contraseña", tint = MaterialTheme.colorScheme.primary)
-                    },
-                    trailingIcon = {
-                        IconButton(onClick = { showPasswordNueva = !showPasswordNueva }) {
-                            Icon(
-                                imageVector = if (showPasswordNueva)
-                                    Icons.Filled.Visibility
-                                else
-                                    Icons.Filled.VisibilityOff,
-                                contentDescription = "Mostrar contraseña",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    },
-                    visualTransformation = if (showPasswordNueva)
-                        VisualTransformation.None
-                    else
-                        PasswordVisualTransformation(),
-                    isError = passwordNueva.isNotEmpty() && passwordError != null,
-                    supportingText = {
-                        if (passwordNueva.isNotEmpty() && passwordNueva.length < 6) {
-                            Text("Mínimo 6 caracteres", color = Color.Red)
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        cursorColor = MaterialTheme.colorScheme.primary,
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                        errorBorderColor = Color.Red,
-                        focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                )
-            }
-
-            item { Spacer(modifier = Modifier.height(16.dp)) }
-
-            // Confirmar contraseña
-            item {
-                OutlinedTextField(
-                    value = passwordConfirm,
-                    onValueChange = { passwordConfirm = it },
-                    label = { Text("Confirmar contraseña", color = MaterialTheme.colorScheme.primary) },
-                    leadingIcon = {
-                        Icon(Icons.Filled.CheckCircle, "Confirmar", tint = MaterialTheme.colorScheme.primary)
-                    },
-                    trailingIcon = {
-                        IconButton(onClick = { showPasswordConfirm = !showPasswordConfirm }) {
-                            Icon(
-                                imageVector = if (showPasswordConfirm)
-                                    Icons.Filled.Visibility
-                                else
-                                    Icons.Filled.VisibilityOff,
-                                contentDescription = "Mostrar contraseña",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    },
-                    visualTransformation = if (showPasswordConfirm)
-                        VisualTransformation.None
-                    else
-                        PasswordVisualTransformation(),
-                    isError = passwordConfirm.isNotEmpty() &&
-                            passwordNueva != passwordConfirm,
-                    supportingText = {
-                        if (passwordConfirm.isNotEmpty() &&
-                            passwordNueva != passwordConfirm) {
-                            Text("Las contraseñas no coinciden", color = Color.Red)
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        cursorColor = MaterialTheme.colorScheme.primary,
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                        errorBorderColor = Color.Red,
-                        focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                )
             }
 
             item { Spacer(modifier = Modifier.height(32.dp)) }
@@ -571,13 +456,6 @@ fun EditarPerfilScreen(
                     if (email != tokenManager.getUserEmail()) {
                         Text(
                             "• Email: $email",
-                            color = MaterialTheme.colorScheme.primary,
-                            fontSize = 14.sp
-                        )
-                    }
-                    if (passwordNueva.isNotEmpty()) {
-                        Text(
-                            "• Contraseña actualizada",
                             color = MaterialTheme.colorScheme.primary,
                             fontSize = 14.sp
                         )

@@ -11,6 +11,27 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/*
+ * Archivo: SubscriptionViewModel.kt
+ *
+ * ViewModel que gestiona el estado de la pantalla de suscripciones.
+ * Se encarga de verificar si el usuario tiene suscripcion activa,
+ * crear sesiones de pago con Stripe y manejar errores.
+ *
+ * Estado (SubscriptionUiState):
+ * - isLoading: Indica si esta cargando
+ * - hasActiveSubscription: Si el usuario tiene suscripcion activa
+ * - subscriptionStatus: Detalles completos de la suscripcion
+ * - checkoutUrl: URL de Stripe para abrir en navegador
+ * - error: Mensaje de error si algo falla
+ * - daysRemaining: Dias restantes de la suscripcion
+ *
+ * Operaciones:
+ * - Al inicializar verifica automaticamente el estado de suscripcion
+ * - Puede crear una sesion de pago que abre Stripe en el navegador
+ * - Maneja errores y estados de carga para la UI
+ */
+
 /**
  * ViewModel para gestionar el estado de las suscripciones
  */

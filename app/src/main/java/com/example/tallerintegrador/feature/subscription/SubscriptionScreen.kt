@@ -28,6 +28,32 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 
+/*
+ * Archivo: SubscriptionScreen.kt
+ *
+ * Pantalla que se muestra despues de seleccionar un perfil para verificar
+ * si el usuario tiene una suscripcion activa. Si no tiene, muestra el plan
+ * de pago con Stripe.
+ *
+ * Flujo:
+ * 1. Se inicializa y verifica automaticamente el estado de suscripcion
+ * 2. Si tiene suscripcion activa: navega directo a Home
+ * 3. Si NO tiene: muestra informacion del plan mensual ($9.90 USD)
+ * 4. Usuario puede presionar "Suscribirse Ahora" para abrir Stripe
+ * 5. Se abre el navegador con el formulario de pago de Stripe
+ * 6. Despues del pago, el backend actualiza la suscripcion
+ *
+ * Componentes:
+ * - SubscriptionScreen: Componente principal con logica de navegacion
+ * - SubscriptionContent: Muestra la informacion del plan y caracteristicas
+ * - PricingCard: Tarjeta con el precio destacado
+ * - FeaturesSection: Lista de 6 caracteristicas incluidas
+ * - LoadingContent: Indicador de carga animado
+ * - ErrorMessage: Mensaje de error dismissible
+ *
+ * Nota: El boton "Continuar sin suscripcion" es temporal para desarrollo.
+ */
+
 /**
  * Pantalla de suscripción que se muestra después de seleccionar perfil
  * si el usuario no tiene una suscripción activa
