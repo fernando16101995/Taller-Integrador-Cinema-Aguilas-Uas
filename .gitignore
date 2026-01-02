@@ -1,4 +1,16 @@
-.kotlin
-.idea
-.gradle
-app/build/
+# Android / IDE
+/.idea/
+/.gradle
+/local.properties
+
+# Build
+/app/build/
+/build
+/captures
+
+# Native build
+.externalNativeBuild/
+.cxx/
+
+# macOS
+.DS_Store
