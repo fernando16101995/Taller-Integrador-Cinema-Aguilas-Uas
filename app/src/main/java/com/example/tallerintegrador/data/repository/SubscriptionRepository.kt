@@ -1,0 +1,146 @@
+package com.example.tallerintegrador.data.repository
+
+import com.example.tallerintegrador.data.local.TokenManager
+import com.example.tallerintegrador.data.model.*
+import com.example.tallerintegrador.data.network.ApiService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/*
+ * Archivo: SubscriptionRepository.kt
+ *
+ * Repositorio que gestiona toda la logica de suscripciones y pagos con Stripe.
+ * Maneja la comunicacion con el backend para crear sesiones de pago,
+ * verificar el estado de suscripcion y obtener informacion del usuario.
+ *
+ * Metodos principales:
+ * - createCheckoutSession: Inicia el proceso de pago con Stripe
+ * - getSubscriptionStatus: Consulta el estado de la suscripcion
+ * - verifySubscription: Valida si la suscripcion es activa
+ * - getUserInfo: Obtiene datos del usuario incluyendo suscripcion
+ * - hasActiveSubscription: Verifica rapidamente si tiene suscripcion activa
+ *
+ * Usa TokenManager para obtener el token de autenticacion automaticamente.
+ */
+
+/**
+ * Repositorio para gestionar las suscripciones y pagos con Stripe
+ */
+@Singleton
+class SubscriptionRepository @Inject constructor(
+    private val apiService: ApiService,
+    private val tokenManager: TokenManager
+) {
+
+    /**
+     * Obtiene el token de autenticación almacenado
+     */
+    private fun getToken(): String? {
+        return tokenManager.getToken()
+    }
+
+    /**
+     * Crea una sesión de pago con Stripe
+     */
+    suspend fun createCheckoutSession(plan: String = "monthly"): Result<CheckoutSessionResponse> =
+        withContext(Dispatchers.IO) {
+            try {
+                val token = getToken() ?: return@withContext Result.failure(
+                    Exception("No hay token de autenticación")
+                )
+
+                val response = apiService.createCheckoutSession(
+                    authHeader = "Bearer $token",
+                    request = CreateCheckoutSessionRequest(plan)
+                )
+
+                if (response.success && response.sessionUrl != null) {
+                    Result.success(response)
+                } else {
+                    Result.failure(Exception(response.message ?: "Error al crear sesión de pago"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    /**
+     * Obtiene el estado de la suscripción del usuario
+     */
+    suspend fun getSubscriptionStatus(): Result<SubscriptionStatusResponse> =
+        withContext(Dispatchers.IO) {
+            try {
+                val token = getToken() ?: return@withContext Result.failure(
+                    Exception("No hay token de autenticación")
+                )
+
+                val response = apiService.getSubscriptionStatus(
+                    authHeader = "Bearer $token"
+                )
+
+                if (response.success) {
+                    Result.success(response)
+                } else {
+                    Result.failure(Exception(response.message ?: "Error al obtener estado"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    /**
+     * Verifica si la suscripción del usuario es válida
+     */
+    suspend fun verifySubscription(): Result<SubscriptionVerifyResponse> =
+        withContext(Dispatchers.IO) {
+            try {
+                val token = getToken() ?: return@withContext Result.failure(
+                    Exception("No hay token de autenticación")
+                )
+
+                val response = apiService.verifySubscription(
+                    authHeader = "Bearer $token"
+                )
+
+                if (response.success) {
+                    Result.success(response)
+                } else {
+                    Result.failure(Exception(response.message ?: "Error al verificar suscripción"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    /**
+     * Obtiene información actualizada del usuario incluyendo estado de suscripción
+     */
+    suspend fun getUserInfo(): Result<User> = withContext(Dispatchers.IO) {
+        try {
+            val token = getToken() ?: return@withContext Result.failure(
+                Exception("No hay token de autenticación")
+            )
+
+            val user = apiService.getUserInfo(authHeader = "Bearer $token")
+            Result.success(user)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Verifica si el usuario tiene una suscripción activa
+     */
+    suspend fun hasActiveSubscription(): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val token = getToken() ?: return@withContext false
+            val user = apiService.getUserInfo(authHeader = "Bearer $token")
+            user.suscripcionActiva
+        } catch (e: Exception) {
+            false
+        }
+    }
+}
+
