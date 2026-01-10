@@ -5,6 +5,9 @@ import com.example.tallerintegrador.feature.admin.LogActividad
 import com.example.tallerintegrador.feature.admin.Usuario
 import retrofit2.Response
 import retrofit2.http.*
+import retrofit2.http.Headers
+import retrofit2.http.Field
+import retrofit2.http.FormUrlEncoded
 
 interface ApiService {
 
@@ -13,8 +16,14 @@ interface ApiService {
     @POST("api/login")
     suspend fun login(@Body request: LoginRequest): LoginResponse
 
+    @FormUrlEncoded
     @POST("api/register")
-    suspend fun register(@Body request: RegisterRequest): LoginResponse
+    suspend fun register(
+        @Field("name") name: String,
+        @Field("email") email: String,
+        @Field("password") password: String,
+        @Field("password_confirmation") passwordConfirmation: String
+    ): LoginResponse
 
     // ---------- RECUPERAR CONTRASEÑA ----------
 
@@ -122,21 +131,25 @@ interface ApiService {
 
     // ---------- PERFILES ----------
 
+    @Headers("Accept: application/json")
     @GET("api/profiles")
     suspend fun getProfiles(@Header("Authorization") authHeader: String): ProfilesResponse
 
+    @Headers("Accept: application/json")
     @GET("api/profiles/{id}")
     suspend fun getProfile(
         @Header("Authorization") authHeader: String,
         @Path("id") id: String
     ): ProfileActionResponse
 
+    @Headers("Accept: application/json")
     @POST("api/profiles")
     suspend fun createProfile(
         @Header("Authorization") authHeader: String,
         @Body request: CreateProfileRequest
     ): ProfileActionResponse
 
+    @Headers("Accept: application/json")
     @PUT("api/profiles/{id}")
     suspend fun updateProfile(
         @Header("Authorization") authHeader: String,
@@ -144,12 +157,16 @@ interface ApiService {
         @Body request: UpdateProfileRequest
     ): ProfileActionResponse
 
-    @DELETE("api/profiles/{id}")
+    @Headers("Accept: application/json")
+    @FormUrlEncoded
+    @POST("api/profiles/{id}")
     suspend fun deleteProfile(
         @Header("Authorization") authHeader: String,
-        @Path("id") id: String
+        @Path("id") id: String,
+        @Field("_method") method: String = "DELETE"
     ): ProfileActionResponse
 
+    @Headers("Accept: application/json")
     @POST("api/profiles/{id}/select")
     suspend fun selectProfile(
         @Header("Authorization") authHeader: String,
@@ -173,6 +190,12 @@ interface ApiService {
     suspend fun verifySubscription(
         @Header("Authorization") authHeader: String
     ): SubscriptionVerifyResponse
+
+    @POST("api/subscription/activate")
+    suspend fun activateSubscription(
+        @Header("Authorization") authHeader: String,
+        @Body request: ActivateSubscriptionRequest
+    ): ActivateSubscriptionResponse
 
     @GET("api/user")
     suspend fun getUserInfo(

@@ -135,27 +135,8 @@ fun WelcomeScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(60.dp))
 
                 // Botones de acción
-                Button(
-                    onClick = { navController.navigate("login") },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth(0.7f)
-                        .height(50.dp)
-                ) {
-                    Text(
-                        "Comenzar ahora",
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
                 OutlinedButton(
-                    onClick = { navController.navigate("home") },
+                    onClick = { navController.navigate("catalogo_publico") },
                     modifier = Modifier
                         .fillMaxWidth(0.7f)
                         .height(50.dp),
@@ -179,6 +160,7 @@ fun WelcomeScreen(navController: NavController) {
                         fontSize = 16.sp
                     )
                 }
+                Spacer(modifier = Modifier.height(12.dp))
             }
         }
     }

@@ -7,6 +7,8 @@ import com.example.tallerintegrador.data.model.ProfileDto
 import com.example.tallerintegrador.data.model.UpdateProfileRequest
 import com.example.tallerintegrador.data.network.ApiService
 import javax.inject.Inject
+import org.json.JSONObject
+import retrofit2.HttpException
 
 /**
  * Repository para manejo de perfiles según la API real.
@@ -30,49 +32,29 @@ class ProfilesRepository @Inject constructor(
             }
             response.profiles
         } catch (e: Exception) {
-            Log.e(TAG, "list() error, returning mock data", e)
-            // Devolver datos de prueba si el backend falla
-            listOf(
-                ProfileDto(
-                    id = "mock1",
-                    userId = 1,
-                    nombre = "jona1961",
-                    avatarUrl = "https://placehold.co/200x200/E50914/FFFFFF?text=J",
-                    esNino = false,
-                    createdAt = null,
-                    updatedAt = null
-                ),
-                ProfileDto(
-                    id = "mock2",
-                    userId = 1,
-                    nombre = "Niños",
-                    avatarUrl = "https://placehold.co/200x200/4CAF50/FFFFFF?text=N",
-                    esNino = true,
-                    createdAt = null,
-                    updatedAt = null
-                )
-            )
+            Log.e(TAG, "list() error", e)
+            throw Exception(parseApiError(e))
         }
     }
 
     suspend fun select(profileId: String): ProfileDto {
-        Log.d(TAG, "select() profileId=$profileId - OFFLINE MODE")
-
-        // Buscar el perfil en los datos mock
-        val profiles = list()
-        val selectedProfile = profiles.find { it.id == profileId }
-            ?: throw Exception("Perfil no encontrado")
-
-        // Guardar SOLO localmente (backend no tiene endpoints de perfiles)
-        tokenManager.saveActiveProfile(
-            profileId = selectedProfile.id,
-            name = selectedProfile.nombre,
-            avatarUrl = selectedProfile.avatarUrl,
-            isKid = selectedProfile.esNino
-        )
-        Log.d(TAG, "select() GUARDADO: ${selectedProfile.nombre}, isKid=${selectedProfile.esNino}")
-
-        return selectedProfile
+        return try {
+            Log.d(TAG, "select() profileId=$profileId")
+            val response = apiService.selectProfile(getAuthHeader(), profileId)
+            if (!response.success || response.profile == null) {
+                throw Exception(response.message ?: "Error al seleccionar perfil")
+            }
+            tokenManager.saveActiveProfile(
+                profileId = response.profile.id,
+                name = response.profile.nombre,
+                avatarUrl = response.profile.avatarUrl,
+                isKid = response.profile.esNino
+            )
+            response.profile
+        } catch (e: Exception) {
+            Log.e(TAG, "select() error", e)
+            throw Exception(parseApiError(e) ?: "Error al seleccionar perfil")
+        }
     }
 
     suspend fun create(nombre: String, avatarUrl: String?, esNino: Boolean): ProfileDto {
@@ -91,7 +73,7 @@ class ProfilesRepository @Inject constructor(
             response.profile
         } catch (e: Exception) {
             Log.e(TAG, "create() error", e)
-            throw Exception("Error al crear perfil: ${e.message}")
+            throw Exception(parseApiError(e) ?: "Error al crear perfil")
         }
     }
 
@@ -111,7 +93,7 @@ class ProfilesRepository @Inject constructor(
             response.profile
         } catch (e: Exception) {
             Log.e(TAG, "update() error", e)
-            throw Exception("Error al actualizar perfil: ${e.message}")
+            throw Exception(parseApiError(e) ?: "Error al actualizar perfil")
         }
     }
 
@@ -125,7 +107,34 @@ class ProfilesRepository @Inject constructor(
             Log.d(TAG, "delete() success")
         } catch (e: Exception) {
             Log.e(TAG, "delete() error", e)
-            throw Exception("Error al eliminar perfil: ${e.message}")
+            throw Exception(parseApiError(e) ?: "Error al eliminar perfil")
         }
+    }
+
+    private fun parseApiError(throwable: Throwable): String? {
+        if (throwable is HttpException) {
+            val errorBody = throwable.response()?.errorBody()?.string()
+            if (!errorBody.isNullOrBlank()) {
+                return try {
+                    val json = JSONObject(errorBody)
+                    val errors = json.optJSONObject("errors")
+                    if (errors != null) {
+                        val keys = errors.keys()
+                        while (keys.hasNext()) {
+                            val key = keys.next()
+                            val messages = errors.optJSONArray(key)
+                            if (messages != null && messages.length() > 0) {
+                                return messages.getString(0)
+                            }
+                        }
+                    }
+                    json.optString("message", errorBody)
+                } catch (_: Exception) {
+                    errorBody
+                }
+            }
+            return "Error ${throwable.code()} ${throwable.message()}"
+        }
+        return throwable.message
     }
 }

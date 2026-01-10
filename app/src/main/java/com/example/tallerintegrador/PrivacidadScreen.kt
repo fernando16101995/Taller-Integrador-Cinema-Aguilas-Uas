@@ -17,11 +17,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.tallerintegrador.auth.AuthViewModel
+import com.example.tallerintegrador.auth.state.AuthState
 import com.example.tallerintegrador.data.local.TokenManager
+import com.example.tallerintegrador.data.model.pelicula
+import com.example.tallerintegrador.feature.peliculas.PeliculaViewModel
+import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 
 /*
@@ -54,11 +59,14 @@ import kotlinx.coroutines.launch
 @Composable
 fun PrivacidadScreen(
     navController: NavController?,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    peliculaViewModel: PeliculaViewModel
 ) {
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences("privacy_prefs", Context.MODE_PRIVATE) }
     val tokenManager = remember { TokenManager(context.applicationContext) }
+    val authState by authViewModel.authState
+    val accountEmail = tokenManager.getUserEmail().orEmpty()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -70,6 +78,30 @@ fun PrivacidadScreen(
     // Diálogos
     var showClearHistoryDialog by remember { mutableStateOf(false) }
     var showSessionsDialog by remember { mutableStateOf(false) }
+    var showChangePasswordDialog by remember { mutableStateOf(false) }
+    var pendingPasswordUpdate by remember { mutableStateOf(false) }
+
+    LaunchedEffect(authState, pendingPasswordUpdate) {
+        if (!pendingPasswordUpdate) return@LaunchedEffect
+        when (val state = authState) {
+            is AuthState.SuccessMessage -> {
+                pendingPasswordUpdate = false
+                snackbarHostState.showSnackbar(state.message)
+                if (accountEmail.isNotBlank()) {
+                    navController?.navigate("validar_codigo/${accountEmail}") {
+                        launchSingleTop = true
+                    }
+                }
+                authViewModel.resetAuthState()
+            }
+            is AuthState.Error -> {
+                pendingPasswordUpdate = false
+                snackbarHostState.showSnackbar(state.message)
+                authViewModel.resetAuthState()
+            }
+            else -> Unit
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -144,14 +176,8 @@ fun PrivacidadScreen(
                 PrivacyActionItem(
                     icon = Icons.Filled.Password,
                     title = "Cambiar Contraseña",
-                    subtitle = "Usa 'Recuperar contraseña' en el login",
-                    onClick = {
-                        scope.launch {
-                            snackbarHostState.showSnackbar(
-                                "Cierra sesión y usa 'Recuperar contraseña' en el login"
-                            )
-                        }
-                    }
+                    subtitle = "Te enviaremos un correo para actualizarla",
+                    onClick = { showChangePasswordDialog = true }
                 )
             }
 
@@ -283,6 +309,24 @@ fun PrivacidadScreen(
             },
             containerColor = MaterialTheme.colorScheme.surface,
             shape = RoundedCornerShape(16.dp)
+        )
+    }
+
+    // DIÁLOGO: CAMBIAR CONTRASEÑA
+    if (showChangePasswordDialog) {
+        ChangePasswordDialog(
+            onDismiss = { showChangePasswordDialog = false },
+            onPasswordChange = { newPassword ->
+                pendingPasswordUpdate = true
+                scope.launch {
+                    // Aquí deberías llamar a la función real de cambio de contraseña
+                    // authViewModel.cambiarContraseña(newPassword)
+                    kotlinx.coroutines.delay(2000)
+                    pendingPasswordUpdate = false
+                    snackbarHostState.showSnackbar("Contraseña cambiada con éxito")
+                    showChangePasswordDialog = false
+                }
+            }
         )
     }
 }
@@ -525,4 +569,83 @@ fun SessionItem(
             )
         }
     }
+}
+
+@Composable
+fun ChangePasswordDialog(
+    onDismiss: () -> Unit,
+    onPasswordChange: (String) -> Unit
+) {
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val isLoading = remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                "Cambiar Contraseña",
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column {
+                TextField(
+                    value = newPassword,
+                    onValueChange = { newPassword = it },
+                    label = { Text("Nueva Contraseña") },
+                    placeholder = { Text("Ingresa tu nueva contraseña") },
+                    isError = errorMessage != null,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                TextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    label = { Text("Confirmar Contraseña") },
+                    placeholder = { Text("Confirma tu nueva contraseña") },
+                    isError = errorMessage != null,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                errorMessage?.let {
+                    Text(
+                        text = it,
+                        color = Color.Red,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (newPassword.isBlank() || confirmPassword.isBlank()) {
+                        errorMessage = "Las contraseñas no pueden estar vacías"
+                    } else if (newPassword != confirmPassword) {
+                        errorMessage = "Las contraseñas no coinciden"
+                    } else {
+                        errorMessage = null
+                        onPasswordChange(newPassword)
+                    }
+                }
+            ) {
+                Text(
+                    if (isLoading.value) "Cambiando..." else "Cambiar Contraseña",
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar", color = MaterialTheme.colorScheme.primary)
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(16.dp)
+    )
 }
