@@ -249,20 +249,6 @@ fun DetallePeliculaScreen(
                                 )
                             }
 
-                            IconButton(
-                                onClick = { /* Compartir */ },
-                                modifier = Modifier
-                                    .background(
-                                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                                        shape = RoundedCornerShape(50)
-                                    )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Share,
-                                    contentDescription = "Compartir",
-                                    tint = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
                         }
                     }
 
@@ -356,32 +342,6 @@ fun DetallePeliculaScreen(
                             }
 
                             Spacer(modifier = Modifier.height(16.dp))
-                        }
-
-                        // Botón de reproducir
-                        Button(
-                            onClick = { /* Reproducir película */ },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.PlayArrow,
-                                contentDescription = "Reproducir",
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(28.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                "Reproducir película",
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold
-                            )
                         }
 
                         Spacer(modifier = Modifier.height(32.dp))

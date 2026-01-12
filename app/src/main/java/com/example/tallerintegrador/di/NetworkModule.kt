@@ -16,8 +16,8 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-    // Backend expone todos los endpoints (películas + suscripciones) en el puerto 8000
-    private const val BASE_URL = "http://10.0.2.2:8000/"
+    // Backend expone todos los endpoints
+    private const val BASE_URL = "http://10.0.2.2:8081/"
 
     @Provides
     @Singleton
