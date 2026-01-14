@@ -30,6 +30,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.ui.layout.ContentScale
 
 /**
  * Pantalla de selección de perfiles
@@ -79,14 +80,18 @@ fun ProfilesScreen(
                 Text(
                     "Error: ${state.error}",
                     color = Color.White,
-                    modifier = Modifier.align(Alignment.Center).padding(32.dp)
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(32.dp)
                 )
             }
 
             // Estado exitoso: muestra la lista de perfiles disponibles
             else -> {
                 Column(
-                    modifier = Modifier.fillMaxSize().padding(24.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     state.error?.let { message ->
@@ -161,11 +166,13 @@ fun ProfilesScreen(
                                      ) {
                                          // Avatar del perfil (circular)
                                          AsyncImage(
-                                             model = profile.avatarUrl ?: "https://placehold.co/200/E50914/FFF?text=P",
+                                             model = getAvatarModel(profile.avatarUrl),
                                              contentDescription = profile.nombre,
-                                             modifier = Modifier.size(96.dp).clip(CircleShape)
+                                             modifier = Modifier
+                                                 .size(96.dp)
+                                                 .clip(CircleShape),
+                                             contentScale = androidx.compose.ui.layout.ContentScale.Crop
                                          )
-
                                          Spacer(Modifier.height(12.dp))
 
                                          // Nombre del perfil
@@ -231,7 +238,9 @@ fun ProfilesScreen(
                                 border = BorderStroke(1.dp, Color.White.copy(alpha = 0.4f))
                             ) {
                                 Column(
-                                    modifier = Modifier.fillMaxWidth().padding(24.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(24.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center
                                 ) {
@@ -257,4 +266,24 @@ fun ProfilesScreen(
             }
         }
     }
+}
+private fun getAvatarModel(avatarUrl: String?): Any {
+    if (avatarUrl.isNullOrBlank()) {
+        return "https://placehold.co/200/E50914/FFF?text=P"
+    }
+
+    // Si es una Data URL (Base64 embebido)
+    if (avatarUrl.startsWith("data:image")) {
+        return try {
+            // Extraer la parte después de la coma: "data:image/png;base64,iVBOR..." -> "iVBOR..."
+            val base64String = avatarUrl.substringAfter(",")
+            android.util.Base64.decode(base64String, android.util.Base64.DEFAULT)
+        } catch (e: Exception) {
+            android.util.Log.e("ProfilesScreen", "Error decodificando Base64", e)
+            "https://placehold.co/200/E50914/FFF?text=Error"
+        }
+    }
+
+    // Si es una URL normal (http/https)
+    return avatarUrl
 }
