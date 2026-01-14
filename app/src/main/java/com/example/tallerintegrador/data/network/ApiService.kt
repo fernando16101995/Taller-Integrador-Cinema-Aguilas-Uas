@@ -5,9 +5,6 @@ import com.example.tallerintegrador.feature.admin.LogActividad
 import com.example.tallerintegrador.feature.admin.Usuario
 import retrofit2.Response
 import retrofit2.http.*
-import retrofit2.http.Headers
-import retrofit2.http.Field
-import retrofit2.http.FormUrlEncoded
 
 interface ApiService {
 
@@ -54,25 +51,29 @@ interface ApiService {
 
     @GET("api/favoritos")
     suspend fun getFavoritos(
-        @Header("Authorization") authHeader: String
+        @Header("Authorization") authHeader: String,
+        @Query("profile_id") profileId: String?
     ): List<pelicula>
 
     @POST("api/favoritos/{peliculaId}")
     suspend fun addFavorito(
         @Header("Authorization") authHeader: String,
-        @Path("peliculaId") peliculaId: Int
+        @Path("peliculaId") peliculaId: Int,
+        @Query("profile_id") profileId: String?
     ): AddFavoritoResponse
 
     @DELETE("api/favoritos/{peliculaId}")
     suspend fun removeFavorito(
         @Header("Authorization") authHeader: String,
-        @Path("peliculaId") peliculaId: Int
+        @Path("peliculaId") peliculaId: Int,
+        @Query("profile_id") profileId: String?
     ): RemoveFavoritoResponse
 
     @GET("api/favoritos/check/{peliculaId}")
     suspend fun checkFavorito(
         @Header("Authorization") authHeader: String,
-        @Path("peliculaId") peliculaId: Int
+        @Path("peliculaId") peliculaId: Int,
+        @Query("profile_id") profileId: String?
     ): CheckFavoritoResponse
 
     // ---------- ADMIN ----------

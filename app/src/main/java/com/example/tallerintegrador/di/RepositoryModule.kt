@@ -1,5 +1,6 @@
 package com.example.tallerintegrador.di
 
+import com.example.tallerintegrador.data.local.TokenManager
 import com.example.tallerintegrador.data.local.cache.CacheManager
 import com.example.tallerintegrador.data.network.ApiService
 import com.example.tallerintegrador.data.repository.FavoritosRepository
@@ -28,9 +29,10 @@ object RepositoryModule {
     @Singleton
     fun provideFavoritosRepository(
         apiService: ApiService,
-        cacheManager: CacheManager
+        cacheManager: CacheManager,
+        tokenManager: TokenManager
     ): FavoritosRepository {
-        return FavoritosRepository(apiService, cacheManager)
+        return FavoritosRepository(apiService, cacheManager, tokenManager)
     }
 
     @Provides

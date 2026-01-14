@@ -1,5 +1,6 @@
 package com.example.tallerintegrador.data.repository
 
+import com.example.tallerintegrador.data.local.TokenManager
 import com.example.tallerintegrador.data.local.cache.CacheManager
 import com.example.tallerintegrador.data.model.pelicula
 import com.example.tallerintegrador.data.network.ApiService
@@ -10,14 +11,16 @@ import kotlinx.coroutines.flow.Flow
  */
 class FavoritosRepository(
     private val apiService: ApiService,
-    private val cacheManager: CacheManager
+    private val cacheManager: CacheManager,
+    private val tokenManager: TokenManager
 ) {
 
     /**
      * Obtiene favoritos del servidor y sincroniza el cache
      */
     suspend fun getFavoritos(token: String): List<pelicula> {
-        val listaPeliculas = apiService.getFavoritos("Bearer $token")
+        val profileId = tokenManager.getActiveProfileId()
+        val listaPeliculas = apiService.getFavoritos("Bearer $token", profileId)
         val favoritosIds = listaPeliculas.map { it.id }
         cacheManager.syncFavoritos(favoritosIds)
         return listaPeliculas
@@ -27,12 +30,13 @@ class FavoritosRepository(
      * Agrega a favoritos (servidor + cache optimista)
      */
     suspend fun addFavorito(token: String, peliculaId: Int) {
+        val profileId = tokenManager.getActiveProfileId()
         // 1. Actualiza el cache inmediatamente (optimistic update)
         cacheManager.addFavoritoToCache(peliculaId)
 
         try {
             // 2. Sincroniza con el servidor
-            apiService.addFavorito("Bearer $token", peliculaId)
+            apiService.addFavorito("Bearer $token", peliculaId, profileId)
         } catch (e: Exception) {
             // Si falla, revierte el cache
             cacheManager.removeFavoritoFromCache(peliculaId)
@@ -44,12 +48,13 @@ class FavoritosRepository(
      * Elimina de favoritos (servidor + cache optimista)
      */
     suspend fun removeFavorito(token: String, peliculaId: Int) {
+        val profileId = tokenManager.getActiveProfileId()
         // 1. Actualiza el cache inmediatamente (optimistic update)
         cacheManager.removeFavoritoFromCache(peliculaId)
 
         try {
             // 2. Sincroniza con el servidor
-            apiService.removeFavorito("Bearer $token", peliculaId)
+            apiService.removeFavorito("Bearer $token", peliculaId, profileId)
         } catch (e: Exception) {
             // Si falla, revierte el cache
             cacheManager.addFavoritoToCache(peliculaId)
