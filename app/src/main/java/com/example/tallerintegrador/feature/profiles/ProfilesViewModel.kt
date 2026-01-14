@@ -3,6 +3,8 @@ package com.example.tallerintegrador.feature.profiles
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil.request.SuccessResult
+import com.example.tallerintegrador.auth.state.AuthState
 import com.example.tallerintegrador.data.model.ProfileDto
 import com.example.tallerintegrador.data.repository.ProfilesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -77,22 +79,34 @@ class ProfilesViewModel @Inject constructor(
      * @param profileId ID del perfil seleccionado
      * @param onDone Callback que se ejecuta al completar la selección
      */
-    fun select(profileId: String, onDone: () -> Unit) {
+    fun select(profileId: String?, onDone: () -> Unit) {
         Log.d(TAG, "select() profileId=$profileId")
+
+        // 1. Validación de seguridad para el ID nulo
+        if (profileId == null) {
+            _uiState.value = _uiState.value.copy(error = "ID de perfil inválido (nulo)")
+            return
+        }
+
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(loading = true, error = null)
-            runCatching { repository.select(profileId) }
-                .onSuccess {
-                    _uiState.value = _uiState.value.copy(loading = false)
-                    onDone()
-                }
-                .onFailure {
-                    Log.e(TAG, "select() error", it)
-                    _uiState.value = _uiState.value.copy(
-                        loading = false,
-                        error = it.message ?: "No se pudo seleccionar el perfil"
-                    )
-                }
+            try {
+                // 2. Llamada al repositorio (el ID ya es seguro aquí)
+                repository.select(profileId)
+
+                _uiState.value = _uiState.value.copy(loading = false)
+
+                // 3. ÉXITO: Ejecutamos el callback de navegación
+                onDone()
+
+            } catch (e: Exception) {
+                Log.e(TAG, "Error seleccionando perfil", e)
+                _uiState.value = _uiState.value.copy(
+                    loading = false,
+                    error = e.message ?: "No se pudo seleccionar el perfil"
+                )
+                // IMPORTANTE: Aquí NO se llama a onDone(), por lo que el usuario se queda en la pantalla de perfiles viendo el error.
+            }
         }
     }
 

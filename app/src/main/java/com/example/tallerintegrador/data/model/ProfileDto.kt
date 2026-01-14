@@ -9,7 +9,7 @@ import kotlinx.parcelize.Parcelize
  * DTO para perfiles de usuario según la API real
  */
 data class ProfileDto(
-    @SerializedName("_id") val id: String,
+    @SerializedName("id") val id: String,
     @SerializedName("user_id") val userId: Int,
     @SerializedName("nombre_perfil") val nombre: String,
     @SerializedName("avatar_url") val avatarUrl: String?,
