@@ -408,7 +408,7 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel = 
                 // Botón Registrarse
                 Button(
                     onClick = {
-                        authViewModel.register(RegisterRequest(name, email, password))
+                        authViewModel.register(RegisterRequest(name, email, password, confirmPassword))
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,

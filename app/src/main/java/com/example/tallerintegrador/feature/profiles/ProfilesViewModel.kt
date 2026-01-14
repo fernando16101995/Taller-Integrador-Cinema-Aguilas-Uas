@@ -78,13 +78,21 @@ class ProfilesViewModel @Inject constructor(
      * @param onDone Callback que se ejecuta al completar la selección
      */
     fun select(profileId: String, onDone: () -> Unit) {
-        Log.d(TAG, "select() SIMPLE MODE - navigating immediately")
+        Log.d(TAG, "select() profileId=$profileId")
         viewModelScope.launch {
-            try {
-                onDone()
-            } catch (e: Exception) {
-                Log.e(TAG, "Navigation failed", e)
-            }
+            _uiState.value = _uiState.value.copy(loading = true, error = null)
+            runCatching { repository.select(profileId) }
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(loading = false)
+                    onDone()
+                }
+                .onFailure {
+                    Log.e(TAG, "select() error", it)
+                    _uiState.value = _uiState.value.copy(
+                        loading = false,
+                        error = it.message ?: "No se pudo seleccionar el perfil"
+                    )
+                }
         }
     }
 
@@ -142,5 +150,13 @@ class ProfilesViewModel @Inject constructor(
             .onFailure {
                 _uiState.value = _uiState.value.copy(error = it.message ?: "No se pudo eliminar el perfil")
             }
+    }
+
+    /**
+     * Limpia el mensaje de error en el estado de la UI
+     * Debe ser llamado después de mostrar el error al usuario
+     */
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(error = null)
     }
 }

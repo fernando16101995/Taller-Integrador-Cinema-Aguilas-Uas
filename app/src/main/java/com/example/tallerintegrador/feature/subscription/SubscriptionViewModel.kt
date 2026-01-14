@@ -168,5 +168,38 @@ class SubscriptionViewModel @Inject constructor(
         checkSubscriptionStatus()
         verifySubscription()
     }
-}
 
+    fun consumeCheckoutUrl() {
+        if (_uiState.value.checkoutUrl != null) {
+            _uiState.value = _uiState.value.copy(checkoutUrl = null)
+        }
+    }
+
+    /**
+     * Maneja el callback de Stripe después del pago
+     */
+    fun handleCheckoutCallback(status: String, sessionId: String?) {
+        viewModelScope.launch {
+            if (status.equals("success", ignoreCase = true) && !sessionId.isNullOrBlank()) {
+                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+                val activationResult = repository.activateSubscription(sessionId)
+                activationResult.fold(
+                    onSuccess = {
+                        _uiState.value = _uiState.value.copy(isLoading = false)
+                        refresh()
+                    },
+                    onFailure = { error ->
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            error = error.message ?: "No se pudo activar la suscripción"
+                        )
+                    }
+                )
+            } else if (status.equals("cancel", ignoreCase = true)) {
+                _uiState.value = _uiState.value.copy(error = "Pago cancelado por el usuario")
+            } else {
+                _uiState.value = _uiState.value.copy(error = "Pago inválido o incompleto")
+            }
+        }
+    }
+}

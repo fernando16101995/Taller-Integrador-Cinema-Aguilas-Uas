@@ -1,6 +1,5 @@
 package com.example.tallerintegrador.feature.subscription
 
-import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -27,6 +26,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 /*
  * Archivo: SubscriptionScreen.kt
@@ -65,7 +67,7 @@ fun SubscriptionScreen(
     subscriptionViewModel: SubscriptionViewModel = hiltViewModel()
 ) {
     val uiState by subscriptionViewModel.uiState.collectAsState()
-    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     // Si el usuario ya tiene suscripción activa, navegar al catálogo
     LaunchedEffect(uiState.hasActiveSubscription) {
@@ -79,11 +81,23 @@ fun SubscriptionScreen(
     // Manejar la URL de checkout cuando esté disponible
     LaunchedEffect(uiState.checkoutUrl) {
         uiState.checkoutUrl?.let { url ->
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            context.startActivity(intent)
+            navController.navigate("subscription/checkout/${Uri.encode(url)}")
+            subscriptionViewModel.consumeCheckoutUrl() // Corregido: usar el método del viewModel
         }
     }
 
+    // Re-check subscription status when the app resumes
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                subscriptionViewModel.checkSubscriptionStatus()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -121,12 +135,9 @@ fun SubscriptionScreen(
             } else {
                 SubscriptionContent(
                     onSubscribe = {
-                        subscriptionViewModel.createCheckoutSession { url ->
-                            // La URL se manejará en el LaunchedEffect
-                        }
+                        subscriptionViewModel.createCheckoutSession { }
                     },
                     onSkip = {
-                        // Por ahora permitimos pasar sin suscripción
                         navController.navigate("home") {
                             popUpTo("subscription") { inclusive = true }
                         }
@@ -457,4 +468,3 @@ fun LoadingContent() {
         )
     }
 }
-

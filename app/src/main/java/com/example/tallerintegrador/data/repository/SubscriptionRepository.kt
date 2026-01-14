@@ -115,6 +115,31 @@ class SubscriptionRepository @Inject constructor(
         }
 
     /**
+     * Activa la suscripción después de un pago exitoso en Stripe
+     */
+    suspend fun activateSubscription(sessionId: String): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            try {
+                val token = getToken() ?: return@withContext Result.failure(
+                    Exception("No hay token de autenticación")
+                )
+
+                val response = apiService.activateSubscription(
+                    authHeader = "Bearer $token",
+                    request = ActivateSubscriptionRequest(sessionId)
+                )
+
+                if (response.success) {
+                    Result.success(Unit)
+                } else {
+                    Result.failure(Exception(response.message ?: "Error al activar suscripción"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    /**
      * Obtiene información actualizada del usuario incluyendo estado de suscripción
      */
     suspend fun getUserInfo(): Result<User> = withContext(Dispatchers.IO) {
@@ -143,4 +168,3 @@ class SubscriptionRepository @Inject constructor(
         }
     }
 }
-

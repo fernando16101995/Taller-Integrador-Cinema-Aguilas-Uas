@@ -66,3 +66,14 @@ data class SubscriptionVerifyResponse(
     val message: String?
 )
 
+data class ActivateSubscriptionRequest(
+    @SerializedName("session_id")
+    val sessionId: String
+)
+
+data class ActivateSubscriptionResponse(
+    @SerializedName("success")
+    val success: Boolean,
+    @SerializedName("message")
+    val message: String?
+)
