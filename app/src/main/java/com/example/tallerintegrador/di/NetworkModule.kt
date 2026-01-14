@@ -11,11 +11,13 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
+
     // Backend expone todos los endpoints
     private const val BASE_URL = "http://10.0.2.2:8081/"
 
@@ -32,6 +34,12 @@ object NetworkModule {
     fun provideAuthInterceptor(tokenManager: TokenManager): Interceptor {
         return Interceptor { chain ->
             val originalRequest = chain.request()
+            
+            // Si ya tiene header Authorization (agregado manualmente), no lo duplicamos
+            if (originalRequest.header("Authorization") != null) {
+                return@Interceptor chain.proceed(originalRequest)
+            }
+
             val token = tokenManager.getToken()
 
             val newRequest = if (token != null) {
@@ -55,6 +63,9 @@ object NetworkModule {
         return OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
             .addInterceptor(authInterceptor)
+            .connectTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
             .build()
     }
 
